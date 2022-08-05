@@ -1,16 +1,17 @@
 ﻿using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Common.Interfaces;
 
 namespace Common
 {
-    public class SecretsService
+    public static class SecretsKeys
     {
-        public static class Keys
-        {
-            public static string CosmosClient => "COSMOS-CLIENT-KEY";
-        }
+        public static string CosmosClient => "COSMOS-CLIENT-KEY";
+    }
 
-        public static string GetSecret(string key)
+    public class SecretsService: ISecretsService
+    {
+        public string GetSecret(string key)
         {
             var vaultLocation = EnvironmentVariableService.GetVariable(EnvironmentVariableService.Keys.AzureKeyVaultEndpoint);
             var client = new SecretClient(new Uri(vaultLocation), credential: new DefaultAzureCredential());

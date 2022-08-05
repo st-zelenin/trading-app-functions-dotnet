@@ -1,31 +1,23 @@
 ﻿using System;
+using Common.Interfaces;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 
 namespace Common
 {
-
-
     public class DbService
     {
-        //[Newtonsoft.Json.JsonConverter(typeof(Microsoft.Azure.Cosmos.CosmosClientOptions+ ClientOptionJsonConverter))]
-        //public Microsoft.Azure.Cosmos.CosmosSerializer Serializer { get; set; }
+        private ISecretsService secretsService;
 
-        public DbService()
+        public DbService(ISecretsService secretsService)
         {
+            this.secretsService = secretsService;
         }
 
         private CosmosClient GetClient()
         {
             string endpoint = EnvironmentVariableService.GetVariable(EnvironmentVariableService.Keys.CosmosDbEndpoint);
-            string key = SecretsService.GetSecret(SecretsService.Keys.CosmosClient);
-
-            ////CosmosSerializer ignoreNullSerializer = new MyCustomIgnoreNullSerializer();
-
-            //CosmosClientOptions clientOptions = new CosmosClientOptions()
-            //{
-            //    Serializer = new Newtonsoft.Json.JsonSerializer()
-            //};
+            string key = this.secretsService.GetSecret(SecretsKeys.CosmosClient);
 
             return new CosmosClient(endpoint, key);
         }

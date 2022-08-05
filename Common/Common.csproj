@@ -11,11 +11,15 @@
     <None Remove="Azure.Security.KeyVault.Secrets" />
     <None Remove="Azure.Identity" />
     <None Remove="Microsoft.Azure.Cosmos" />
+    <None Remove="Interfaces\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="JWT" Version="9.0.3" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.3.0" />
     <PackageReference Include="Azure.Identity" Version="1.6.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.29.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
   </ItemGroup>
 </Project>

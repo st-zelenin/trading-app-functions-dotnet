@@ -14,28 +14,36 @@ using Microsoft.Azure.Cosmos;
 using Crypto.Models;
 using System.Linq;
 using System.Collections.Generic;
+using Common.Interfaces;
 
 namespace Crypto
 {
-    public static class GetProducts
+    public class GetProducts
     {
-        static readonly HttpClient client = new HttpClient();
+        //static readonly HttpClient client = new HttpClient();
+
+        private readonly ISecretsService secretsService;
+
+        public GetProducts(ISecretsService secretsService)
+        {
+            this.secretsService = secretsService;
+        }
 
         [FunctionName("GetProducts")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
-            ILogger log, ClaimsPrincipal claimsPrincipal)
+        public async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req
+            )
         {
             var azureUserId = AuthService.GetUserId(req.Headers["Authorization"]);
 
-            var dbService = new DbService();
+            var dbService = new DbService(this.secretsService);
             var usersContainer = dbService.GetUsersContainer();
 
             var itemResponse = await usersContainer.ReadItemAsync<Common.Models.User>(azureUserId, new PartitionKey(azureUserId));
             var user = itemResponse.Resource;
 
 
-            HttpResponseMessage response = await client.GetAsync("https://api.crypto.com/v2/public/get-instruments");
+            HttpResponseMessage response = await new HttpClient().GetAsync("https://api.crypto.com/v2/public/get-instruments");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -47,7 +55,8 @@ namespace Crypto
                 {
                     var raw = instruments.result.instruments.First(x => x.instrument_name == pair);
 
-                    if (raw != null) {
+                    if (raw != null)
+                    {
                         acc.Add(pair, new Common.Models.Product()
                         {
                             currencyPair = raw.instrument_name,
