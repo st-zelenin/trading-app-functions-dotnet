@@ -4,23 +4,17 @@ using Common.Interfaces;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
-[assembly: FunctionsStartup(typeof(Crypto.Startup2))]
+[assembly: FunctionsStartup(typeof(Crypto.Startup))]
 
 namespace Crypto
 {
-    public class Startup2 : FunctionsStartup
+    public class Startup : FunctionsStartup
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            //builder.Services.AddHttpClient();
-
-            //builder.Services.AddSingleton<IMyService>((s) => {
-            //    return new MyService();
-            //});
-
+            builder.Services.AddSingleton<IEnvironmentVariableService, EnvironmentVariableService>();
             builder.Services.AddSingleton<ISecretsService, SecretsService>();
-
-            Console.WriteLine("----------------------");
+            builder.Services.AddSingleton<IDbService, DbService>();
         }
     }
 }

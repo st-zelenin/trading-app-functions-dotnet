@@ -22,11 +22,11 @@ namespace Crypto
     {
         //static readonly HttpClient client = new HttpClient();
 
-        private readonly ISecretsService secretsService;
+        private readonly IDbService dbService;
 
-        public GetProducts(ISecretsService secretsService)
+        public GetProducts(IDbService dbService)
         {
-            this.secretsService = secretsService;
+            this.dbService = dbService;
         }
 
         [FunctionName("GetProducts")]
@@ -36,8 +36,8 @@ namespace Crypto
         {
             var azureUserId = AuthService.GetUserId(req.Headers["Authorization"]);
 
-            var dbService = new DbService(this.secretsService);
-            var usersContainer = dbService.GetUsersContainer();
+            //var dbService = new DbService(this.secretsService);
+            var usersContainer = this.dbService.GetUsersContainer();
 
             var itemResponse = await usersContainer.ReadItemAsync<Common.Models.User>(azureUserId, new PartitionKey(azureUserId));
             var user = itemResponse.Resource;

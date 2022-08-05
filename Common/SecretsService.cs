@@ -9,11 +9,18 @@ namespace Common
         public static string CosmosClient => "COSMOS-CLIENT-KEY";
     }
 
-    public class SecretsService: ISecretsService
+    public class SecretsService : ISecretsService
     {
+        private IEnvironmentVariableService environmentVariableService;
+
+        public SecretsService(IEnvironmentVariableService environmentVariableService)
+        {
+            this.environmentVariableService = environmentVariableService;
+        }
+
         public string GetSecret(string key)
         {
-            var vaultLocation = EnvironmentVariableService.GetVariable(EnvironmentVariableService.Keys.AzureKeyVaultEndpoint);
+            var vaultLocation = this.environmentVariableService.GetVariable(EnvironmentVariableKeys.AzureKeyVaultEndpoint);
             var client = new SecretClient(new Uri(vaultLocation), credential: new DefaultAzureCredential());
 
             KeyVaultSecret secret = client.GetSecret(key);

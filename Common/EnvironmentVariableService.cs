@@ -1,15 +1,17 @@
 ﻿using System;
+using Common.Interfaces;
+
 namespace Common
 {
-    public class EnvironmentVariableService
+    public static class EnvironmentVariableKeys
     {
-        public static class Keys
-        {
-            public static string AzureKeyVaultEndpoint => "AzureKeyVaultEndpoint";
-            public static string CosmosDbEndpoint => "CosmosDbEndpoint";
-        }
+        public static string AzureKeyVaultEndpoint => "AzureKeyVaultEndpoint";
+        public static string CosmosDbEndpoint => "CosmosDbEndpoint";
+    }
 
-        public static string GetVariable(string key)
+    public class EnvironmentVariableService : IEnvironmentVariableService
+    {
+        public string GetVariable(string key)
         {
             return Environment.GetEnvironmentVariable(key);
         }

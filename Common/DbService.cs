@@ -5,18 +5,20 @@ using Newtonsoft.Json;
 
 namespace Common
 {
-    public class DbService
+    public class DbService : IDbService
     {
         private ISecretsService secretsService;
+        private IEnvironmentVariableService environmentVariableService;
 
-        public DbService(ISecretsService secretsService)
+        public DbService(ISecretsService secretsService, IEnvironmentVariableService environmentVariableService)
         {
             this.secretsService = secretsService;
+            this.environmentVariableService = environmentVariableService;
         }
 
         private CosmosClient GetClient()
         {
-            string endpoint = EnvironmentVariableService.GetVariable(EnvironmentVariableService.Keys.CosmosDbEndpoint);
+            string endpoint = this.environmentVariableService.GetVariable(EnvironmentVariableKeys.CosmosDbEndpoint);
             string key = this.secretsService.GetSecret(SecretsKeys.CosmosClient);
 
             return new CosmosClient(endpoint, key);
