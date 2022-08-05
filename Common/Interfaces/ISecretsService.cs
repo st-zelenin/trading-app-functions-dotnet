@@ -3,7 +3,7 @@ namespace Common.Interfaces
 {
     public interface ISecretsService
     {
-        string GetSecret(string key);
+        Task<string> GetSecret(string key);
     }
 }
 

@@ -7,33 +7,39 @@ namespace Common
 {
     public class AuthService
     {
-        public static string GetUserId(string authorizationHeader )
+        public static string GetUserId(string authorizationHeader)
         {
             if (string.IsNullOrEmpty(authorizationHeader))
             {
-                throw new Exception("authorizationHeader missing");
+                throw new ArgumentException("authorizationHeader missing");
             }
 
-            string token = authorizationHeader.Substring(7);
+            const string TOKEN_START = "Bearer ";
 
-            ValidationParameters validationParameters = ValidationParameters.Default;
+            if (!authorizationHeader.StartsWith(TOKEN_START))
+            {
+                throw new ArgumentException("bearer token is expected");
+            }
+
+            var token = authorizationHeader.Substring(TOKEN_START.Length);
+
+            var validationParameters = ValidationParameters.Default;
             validationParameters.ValidateSignature = false;
 
-            var json = JwtBuilder.Create()
+            var dictionary = JwtBuilder.Create()
                 .WithValidationParameters(validationParameters)
                 .WithAlgorithm(new HMACSHA256Algorithm())
                 .Decode<IDictionary<string, string>>(token);
 
-            string userId;
+            string? oid;
+            dictionary.TryGetValue("oid", out oid);
 
-            bool v = json.TryGetValue("oid", out userId);
-
-            if (!v)
+            if (string.IsNullOrEmpty(oid))
             {
                 throw new Exception("oid missing");
             }
 
-            return userId;
+            return oid;
         }
     }
 }

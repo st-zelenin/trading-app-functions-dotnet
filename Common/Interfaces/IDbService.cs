@@ -5,7 +5,7 @@ namespace Common.Interfaces
 {
     public interface IDbService
     {
-        Container GetUsersContainer();
+        Task<Container> GetUsersContainer();
     }
 }
 

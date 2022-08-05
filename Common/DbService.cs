@@ -7,8 +7,10 @@ namespace Common
 {
     public class DbService : IDbService
     {
-        private ISecretsService secretsService;
-        private IEnvironmentVariableService environmentVariableService;
+        private readonly ISecretsService secretsService;
+        private readonly IEnvironmentVariableService environmentVariableService;
+
+        private CosmosClient client;
 
         public DbService(ISecretsService secretsService, IEnvironmentVariableService environmentVariableService)
         {
@@ -16,22 +18,32 @@ namespace Common
             this.environmentVariableService = environmentVariableService;
         }
 
-        private CosmosClient GetClient()
+        private async Task<CosmosClient> GetClient()
         {
-            string endpoint = this.environmentVariableService.GetVariable(EnvironmentVariableKeys.CosmosDbEndpoint);
-            string key = this.secretsService.GetSecret(SecretsKeys.CosmosClient);
+            if (this.client == null)
+            {
+                string endpoint = this.environmentVariableService.GetVariable(EnvironmentVariableKeys.CosmosDbEndpoint);
+                string key = await this.secretsService.GetSecret(SecretsKeys.CosmosClient);
 
-            return new CosmosClient(endpoint, key);
+                var client = new CosmosClient(endpoint, key);
+                this.client = client;
+            }
+
+            return this.client;
         }
 
-        public Database GetTradingDb()
+        public async Task<Database> GetTradingDb()
         {
-            return GetClient().GetDatabase("trading");
+            var client = await GetClient();
+
+            return client.GetDatabase("trading");
         }
 
-        public Container GetUsersContainer()
+        public async Task<Container> GetUsersContainer()
         {
-            return GetTradingDb().GetContainer("users");
+            var database = await GetTradingDb();
+
+            return database.GetContainer("users");
         }
     }
 }

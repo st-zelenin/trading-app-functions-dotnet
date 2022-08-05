@@ -11,21 +11,29 @@ namespace Common
 
     public class SecretsService : ISecretsService
     {
-        private IEnvironmentVariableService environmentVariableService;
+        private readonly SecretClient client;
+        private readonly Dictionary<string, string>  cache = new Dictionary<string, string>();
 
         public SecretsService(IEnvironmentVariableService environmentVariableService)
         {
-            this.environmentVariableService = environmentVariableService;
+            var vaultLocation = environmentVariableService.GetVariable(EnvironmentVariableKeys.AzureKeyVaultEndpoint);
+
+            this.client = new SecretClient(new Uri(vaultLocation), new DefaultAzureCredential());
         }
 
-        public string GetSecret(string key)
+        public async Task<string> GetSecret(string key)
         {
-            var vaultLocation = this.environmentVariableService.GetVariable(EnvironmentVariableKeys.AzureKeyVaultEndpoint);
-            var client = new SecretClient(new Uri(vaultLocation), credential: new DefaultAzureCredential());
+            string? secretValue;
+            if (this.cache.TryGetValue(key, out secretValue))
+            {
+                return secretValue;
+            }
 
-            KeyVaultSecret secret = client.GetSecret(key);
+            KeyVaultSecret secret = await client.GetSecretAsync(key);
+            secretValue = secret.Value;
+            this.cache.Add(key, secretValue);
 
-            return secret.Value;
+            return secretValue;
         }
     }
 }

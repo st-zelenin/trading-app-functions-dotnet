@@ -20,8 +20,6 @@ namespace Crypto
 {
     public class GetProducts
     {
-        //static readonly HttpClient client = new HttpClient();
-
         private readonly IDbService dbService;
 
         public GetProducts(IDbService dbService)
@@ -32,16 +30,14 @@ namespace Crypto
         [FunctionName("GetProducts")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req
-            )
+        )
         {
             var azureUserId = AuthService.GetUserId(req.Headers["Authorization"]);
 
-            //var dbService = new DbService(this.secretsService);
-            var usersContainer = this.dbService.GetUsersContainer();
+            var usersContainer = await this.dbService.GetUsersContainer();
 
             var itemResponse = await usersContainer.ReadItemAsync<Common.Models.User>(azureUserId, new PartitionKey(azureUserId));
             var user = itemResponse.Resource;
-
 
             HttpResponseMessage response = await new HttpClient().GetAsync("https://api.crypto.com/v2/public/get-instruments");
             response.EnsureSuccessStatusCode();
