@@ -1,18 +1,21 @@
 ﻿using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Common.Interfaces;
+using Common.Models;
+using Newtonsoft.Json;
 
 namespace Common
 {
     public static class SecretsKeys
     {
         public static string CosmosClient => "COSMOS-CLIENT-KEY";
+        public static string CryptoApiKey => "CRYPTO-SPOT-TRADE";
     }
 
     public class SecretsService : ISecretsService
     {
         private readonly SecretClient client;
-        private readonly Dictionary<string, string>  cache = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> cache = new Dictionary<string, string>();
 
         public SecretsService(IEnvironmentVariableService environmentVariableService)
         {
@@ -30,10 +33,23 @@ namespace Common
             }
 
             KeyVaultSecret secret = await client.GetSecretAsync(key);
-            secretValue = secret.Value;
-            this.cache.Add(key, secretValue);
+            this.cache.Add(key, secret.Value);
 
-            return secretValue;
+            return secret.Value;
+        }
+
+        public async Task<T> GetSecret<T>(string key) where T : new()
+        {
+            string? secretValue;
+            if (this.cache.TryGetValue(key, out secretValue))
+            {
+                return JsonConvert.DeserializeObject<T>(secretValue);
+            }
+
+            KeyVaultSecret secret = await client.GetSecretAsync(key);
+            this.cache.Add(key, secret.Value);
+
+            return JsonConvert.DeserializeObject<T>(secret.Value);
         }
     }
 }

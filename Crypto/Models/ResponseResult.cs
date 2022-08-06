@@ -8,9 +8,11 @@ namespace Crypto.Models
         public IEnumerable<Instrument> instruments { get; set; }
     }
 
-    public class InstrumentsResponse
+    public class OrdersResponseResult
     {
-        public InstrumentsResponseResult result { get; set; }
+        public IEnumerable<Order> order_list { get; set; }
+
+        public long count { get; set; }
     }
 }
 

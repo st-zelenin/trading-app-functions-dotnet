@@ -1,13 +1,14 @@
 ﻿using System;
+using Common.Interfaces;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 
 namespace Common
 {
-    public class AuthService
+    public class AuthService: IAuthService
     {
-        public static string GetUserId(string authorizationHeader)
+        public string GetUserId(string authorizationHeader)
         {
             if (string.IsNullOrEmpty(authorizationHeader))
             {
@@ -40,6 +41,11 @@ namespace Common
             }
 
             return oid;
+        }
+
+        public void ValidateUser(string authorizationHeader)
+        {
+            this.GetUserId(authorizationHeader);
         }
     }
 }

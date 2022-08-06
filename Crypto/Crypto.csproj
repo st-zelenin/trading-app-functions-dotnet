@@ -14,6 +14,8 @@
     <None Remove="JWT" />
     <None Remove="Microsoft.Azure.Functions.Extensions" />
     <None Remove="Models\" />
+    <None Remove="Services\" />
+    <None Remove="Interfaces\" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
@@ -31,5 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
+    <Folder Include="Services\" />
+    <Folder Include="Interfaces\" />
   </ItemGroup>
 </Project>

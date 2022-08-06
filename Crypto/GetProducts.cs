@@ -1,30 +1,32 @@
 ﻿using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Common;
+using Common.Interfaces;
+using Crypto.Interfaces;
+using Crypto.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Net.Http;
-using System.Security.Claims;
-using Common;
-using Microsoft.Azure.Cosmos;
-using Crypto.Models;
-using System.Linq;
-using System.Collections.Generic;
-using Common.Interfaces;
 
 namespace Crypto
 {
     public class GetProducts
     {
         private readonly IDbService dbService;
+        private readonly IHttpService httpService;
+        private readonly IAuthService authService;
 
-        public GetProducts(IDbService dbService)
+        public GetProducts(IDbService dbService, IHttpService httpService, IAuthService authService)
         {
             this.dbService = dbService;
+            this.httpService = httpService;
+            this.authService = authService;
         }
 
         [FunctionName("GetProducts")]
@@ -32,7 +34,7 @@ namespace Crypto
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req
         )
         {
-            var azureUserId = AuthService.GetUserId(req.Headers["Authorization"]);
+            var azureUserId = this.authService.GetUserId(req.Headers["Authorization"]);
 
             var usersContainer = await this.dbService.GetUsersContainer();
 
@@ -43,9 +45,9 @@ namespace Crypto
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            var instruments = JsonConvert.DeserializeObject<InstrumentsResponse>(responseBody);
+            var instruments = JsonConvert.DeserializeObject<ResponseWithResult<InstrumentsResponseResult>>(responseBody);
 
-            var products = user.crypto_pairs.Aggregate(
+            var body = user.crypto_pairs.Aggregate(
                 new Dictionary<string, Common.Models.Product>(),
                 (acc, pair) =>
                 {
@@ -65,8 +67,9 @@ namespace Crypto
                     return acc;
                 });
 
-            return new OkObjectResult(products);
+            return new OkObjectResult(body);
         }
     }
+
 }
 
