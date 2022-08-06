@@ -1,5 +1,6 @@
 ﻿using System;
 using Common.Interfaces;
+using Common.Models;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 
@@ -10,7 +11,9 @@ namespace Common
         private readonly ISecretsService secretsService;
         private readonly IEnvironmentVariableService environmentVariableService;
 
-        private CosmosClient client;
+        private const string USERS_CONTAINER_NAME = "users";
+
+        private CosmosClient? client;
 
         public DbService(ISecretsService secretsService, IEnvironmentVariableService environmentVariableService)
         {
@@ -32,18 +35,32 @@ namespace Common
             return this.client;
         }
 
-        public async Task<Database> GetTradingDb()
+        private async Task<Database> GetTradingDb()
         {
             var client = await GetClient();
 
             return client.GetDatabase("trading");
         }
 
-        public async Task<Container> GetUsersContainer()
+        private async Task<Container> GetTradingContainer(string containerName)
         {
             var database = await GetTradingDb();
 
-            return database.GetContainer("users");
+            return database.GetContainer(containerName);
+        }
+
+        public async Task<Trader> GetUser(string azureUserId)
+        {
+            var usersContainer = await this.GetTradingContainer(USERS_CONTAINER_NAME);
+
+            var itemResponse = await usersContainer.ReadItemAsync<Trader>(azureUserId, new PartitionKey(azureUserId));
+
+            if (itemResponse == null)
+            {
+                throw new MissingItemResponse(azureUserId, USERS_CONTAINER_NAME);
+            }
+
+            return itemResponse.Resource;
         }
     }
 }

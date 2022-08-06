@@ -1,7 +1,7 @@
 ﻿using System;
 namespace Common.Models
 {
-    public class User
+    public class Trader
     {
         public string id { get; set; }
         public string name { get; set; }

@@ -1,11 +1,11 @@
 ﻿using System;
-using Microsoft.Azure.Cosmos;
+using Common.Models;
 
 namespace Common.Interfaces
 {
     public interface IDbService
     {
-        Task<Container> GetUsersContainer();
+        Task<Trader> GetUser(string azureUserId);
     }
 }
 

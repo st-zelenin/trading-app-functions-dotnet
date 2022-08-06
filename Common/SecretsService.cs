@@ -1,4 +1,5 @@
-﻿using Azure.Identity;
+﻿using System.Collections.Concurrent;
+using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Common.Interfaces;
 using Common.Models;
@@ -15,7 +16,9 @@ namespace Common
     public class SecretsService : ISecretsService
     {
         private readonly SecretClient client;
-        private readonly Dictionary<string, string> cache = new Dictionary<string, string>();
+        //private readonly Dictionary<string, string> cache = new Dictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> cache = new ConcurrentDictionary<string, string>();
+
 
         public SecretsService(IEnvironmentVariableService environmentVariableService)
         {
@@ -26,28 +29,30 @@ namespace Common
 
         public async Task<string> GetSecret(string key)
         {
-            string? secretValue;
-            if (this.cache.TryGetValue(key, out secretValue))
-            {
-                return secretValue;
-            }
+            //string? secretValue;
+            //if (this.cache.TryGetValue(key, out secretValue))
+            //{
+            //    return secretValue;
+            //}
 
             KeyVaultSecret secret = await client.GetSecretAsync(key);
-            this.cache.Add(key, secret.Value);
+            this.cache.GetOrAdd(key, secret.Value);
+            //this.cache.Add(key, secret.Value);
 
             return secret.Value;
         }
 
         public async Task<T> GetSecret<T>(string key) where T : new()
         {
-            string? secretValue;
-            if (this.cache.TryGetValue(key, out secretValue))
-            {
-                return JsonConvert.DeserializeObject<T>(secretValue);
-            }
+            //string? secretValue;
+            //if (this.cache.TryGetValue(key, out secretValue))
+            //{
+            //    return JsonConvert.DeserializeObject<T>(secretValue);
+            //}
 
             KeyVaultSecret secret = await client.GetSecretAsync(key);
-            this.cache.Add(key, secret.Value);
+            this.cache.GetOrAdd(key, secret.Value);
+            //this.cache.Add(key, secret.Value);
 
             return JsonConvert.DeserializeObject<T>(secret.Value);
         }

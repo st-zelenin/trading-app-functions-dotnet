@@ -19,5 +19,10 @@ namespace Crypto.Models
     {
         public IEnumerable<Balance> accounts { get; set; }
     }
+
+    public class TickersResponseResult
+    {
+        public IEnumerable<Ticker> data { get; set; }
+    }
 }
 
