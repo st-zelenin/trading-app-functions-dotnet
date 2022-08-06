@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Common;
 using Common.Interfaces;
 using Crypto.Interfaces;
 using Crypto.Models;
@@ -12,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Newtonsoft.Json;
 
 namespace Crypto
 {
@@ -41,11 +38,7 @@ namespace Crypto
             var itemResponse = await usersContainer.ReadItemAsync<Common.Models.User>(azureUserId, new PartitionKey(azureUserId));
             var user = itemResponse.Resource;
 
-            HttpResponseMessage response = await new HttpClient().GetAsync("https://api.crypto.com/v2/public/get-instruments");
-            response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
-
-            var instruments = JsonConvert.DeserializeObject<ResponseWithResult<InstrumentsResponseResult>>(responseBody);
+            var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");
 
             var body = user.crypto_pairs.Aggregate(
                 new Dictionary<string, Common.Models.Product>(),

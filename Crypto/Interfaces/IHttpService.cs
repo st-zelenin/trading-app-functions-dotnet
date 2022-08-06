@@ -5,8 +5,9 @@ namespace Crypto.Interfaces
 {
     public interface IHttpService
     {
-        //Task<TRes> Post<TRes>(string path, object body);
-        Task<TRes> Post<TRes, TBody>(string path, TBody body) where TBody : new();
+        Task<TRes> GetAsync<TRes>(string path);
+        Task<TRes> PostAsync<TRes>(string path);
+        Task<TRes> PostAsync<TRes, TBody>(string path, TBody body) where TBody : new();
     }
 }
 

@@ -14,5 +14,10 @@ namespace Crypto.Models
 
         public long count { get; set; }
     }
+
+    public class BalancesResponseResult
+    {
+        public IEnumerable<Balance> accounts { get; set; }
+    }
 }
 

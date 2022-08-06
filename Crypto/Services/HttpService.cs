@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Formatting;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Common;
 using Common.Interfaces;
@@ -31,7 +27,8 @@ namespace Crypto.Services
 
         public RequestBody(T body, string method)
         {
-            this.body = body == null ? (T)new object() : body;
+            this.body = body;
+            //this.body = body == null ? (T)new object() : body;
             this.nonce = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
             this.id = this.nonce;
             this.method = method;
@@ -72,7 +69,6 @@ namespace Crypto.Services
         private readonly ISecretsService secretsService;
         private ExchangeApiKeysSecret apiKeys;
         private readonly HttpClient client;
-        private readonly MediaTypeFormatter formatter;
 
         public HttpService(ISecretsService secretsService)
         {
@@ -83,39 +79,15 @@ namespace Crypto.Services
             };
 
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
-
-            this.formatter = new JsonMediaTypeFormatter();
         }
 
-        private async Task SignRequestBody(string method, NameValueCollection body)
+
+        public Task<TRes> PostAsync<TRes>(string path)
         {
-            if (this.apiKeys == null)
-            {
-                this.apiKeys = await this.secretsService.GetSecret<ExchangeApiKeysSecret>(SecretsKeys.CryptoApiKey);
-            }
-
-            var nonce = DateTime.Now.Ticks;
-            var id = nonce;
-
-            var paramsString = body.AllKeys
-                .OrderBy(a => a)
-                .Aggregate("", (acc, key) => acc + key + body.Get(key));
-
-            var sigPayload = method + id + apiKeys.apiKey + paramsString + nonce;
-
-            ASCIIEncoding encoding = new ASCIIEncoding();
-
-            byte[] payload = encoding.GetBytes(sigPayload);
-            byte[] secret = encoding.GetBytes(apiKeys.secretKey);
-            byte[] hashBytes;
-
-            using (HMACSHA256 hash = new HMACSHA256(secret))
-            {
-                hashBytes = hash.ComputeHash(payload);
-            }
+            return this.PostAsync<TRes, object>(path, new object());
         }
 
-        public async Task<TRes> Post<TRes, TBody>(string path, TBody body) where TBody : new()
+        public async Task<TRes> PostAsync<TRes, TBody>(string path, TBody body) where TBody : new()
         {
             if (this.apiKeys == null)
             {
@@ -128,6 +100,15 @@ namespace Crypto.Services
             Console.WriteLine(jsonString);
 
             var response = await client.PostAsync(path, new StringContent(jsonString, Encoding.UTF8, "application/json"));
+            //response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<TRes>(responseBody);
+        }
+
+        public async Task<TRes> GetAsync<TRes>(string path)
+        {
+            var response = await this.client.GetAsync(path);
             //response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 

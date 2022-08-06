@@ -17,7 +17,6 @@ namespace Crypto
         private readonly IAuthService authService;
         private readonly IHttpService httpService;
 
-
         public GetOpenOrders(IAuthService authService, IHttpService httpService)
         {
             this.authService = authService;
@@ -25,7 +24,7 @@ namespace Crypto
         }
 
         [FunctionName("GetOpenOrders")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
             this.authService.ValidateUser(req.Headers["Authorization"]);
 
@@ -35,7 +34,7 @@ namespace Crypto
 
             do
             {
-                var response = await this.httpService.Post<ResponseWithResult<OrdersResponseResult>, Req>("private/get-open-orders", new Req() { page_size = 100, page = page });
+                var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, GetOpenOrdersRequestBody>("private/get-open-orders", new GetOpenOrdersRequestBody() { page_size = 100, page = page });
 
                 orders.AddRange(response.result.order_list);
                 done = orders.Count >= response.result.count;
@@ -66,7 +65,7 @@ namespace Crypto
     }
 
 
-    internal class Req
+    internal class GetOpenOrdersRequestBody
     {
         public int page_size { get; set; }
         public int page { get; set; }

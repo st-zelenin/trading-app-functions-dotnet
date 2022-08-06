@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Common;
+﻿using Common;
 using Common.Interfaces;
 using Crypto.Interfaces;
 using Crypto.Services;
@@ -21,22 +18,6 @@ namespace Crypto
             builder.Services.AddSingleton<ISecretsService, SecretsService>();
             builder.Services.AddSingleton<IDbService, DbService>();
             builder.Services.AddSingleton<IHttpService, HttpService>();
-
-            //builder.Services.Configure<JsonSerializerOptions>(options =>
-            //{
-            //    //options.PropertyNameCaseInsensitive = true;
-
-
-            //    options.Converters.Clear();
-            //    options.Converters.Add(new JsonStringEnumConverter());
-
-            //});
-
-
-            
-
-
-
         }
     }
 }
