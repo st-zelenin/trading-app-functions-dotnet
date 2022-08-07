@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Common.Interfaces;
 using Common.Models;
 using DataAccess.Interfaces;
-using DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;

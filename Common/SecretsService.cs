@@ -2,7 +2,6 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Common.Interfaces;
-using Common.Models;
 using Newtonsoft.Json;
 
 namespace Common
@@ -27,7 +26,7 @@ namespace Common
             this.client = new SecretClient(new Uri(vaultLocation), new DefaultAzureCredential());
         }
 
-        public async Task<string> GetSecret(string key)
+        public async Task<string> GetSecretAsync(string key)
         {
             //string? secretValue;
             //if (this.cache.TryGetValue(key, out secretValue))
@@ -42,7 +41,7 @@ namespace Common
             return secret.Value;
         }
 
-        public async Task<T> GetSecret<T>(string key) where T : new()
+        public async Task<T> GetSecretAsync<T>(string key) where T : new()
         {
             //string? secretValue;
             //if (this.cache.TryGetValue(key, out secretValue))

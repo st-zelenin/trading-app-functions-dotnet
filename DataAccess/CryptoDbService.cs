@@ -1,6 +1,4 @@
-﻿using System;
-using Common.Interfaces;
-using Common.Models;
+﻿using Common.Interfaces;
 using DataAccess.Interfaces;
 using DataAccess.Models;
 using Microsoft.Azure.Cosmos;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -9,11 +10,12 @@ using Common;
 using Common.Interfaces;
 using Common.Models;
 using Crypto.Interfaces;
+using Crypto.Models;
 using Newtonsoft.Json;
 
 namespace Crypto.Services
 {
-    internal class RequestBody<T> where T : new()
+    internal class RequestBody<T>
     {
         public long id { get; private set; }
         public string method { get; private set; }
@@ -28,7 +30,6 @@ namespace Crypto.Services
         public RequestBody(T body, string method)
         {
             this.body = body;
-            //this.body = body == null ? (T)new object() : body;
             this.nonce = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
             this.id = this.nonce;
             this.method = method;
@@ -38,9 +39,9 @@ namespace Crypto.Services
         {
             this.api_key = apiKeys.apiKey;
 
-            var paramsString = typeof(T)
-                .GetProperties()
-                .Select(pi => new { Name = pi.Name, Value = pi.GetValue(this.body) })
+            var paramsString = TypeDescriptor.GetProperties(this.body)
+                .Cast<PropertyDescriptor>()
+                .Select(pd => new { Name = pd.Name, Value = pd.GetValue(this.body) })
                 .OrderBy(pair => pair.Name)
                 .Aggregate("", (acc, pair) => acc + pair.Name + pair.Value.ToString());
 
@@ -61,7 +62,6 @@ namespace Crypto.Services
 
             return this;
         }
-
     }
 
     public class HttpService : IHttpService
@@ -81,17 +81,21 @@ namespace Crypto.Services
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
-
         public Task<TRes> PostAsync<TRes>(string path)
         {
             return this.PostAsync<TRes, object>(path, new object());
         }
 
-        public async Task<TRes> PostAsync<TRes, TBody>(string path, TBody body) where TBody : new()
+        public Task<BaseResponse> PostAsync<TBody>(string path, TBody body)
+        {
+            return this.PostAsync<BaseResponse, TBody>(path, body);
+        }
+
+        public async Task<TRes> PostAsync<TRes, TBody>(string path, TBody body)
         {
             if (this.apiKeys == null)
             {
-                this.apiKeys = await this.secretsService.GetSecret<ExchangeApiKeysSecret>(SecretsKeys.CryptoApiKey);
+                this.apiKeys = await this.secretsService.GetSecretAsync<ExchangeApiKeysSecret>(SecretsKeys.CryptoApiKey);
             }
 
             var signedBody = new RequestBody<TBody>(body, path).Sign(this.apiKeys);
@@ -101,18 +105,18 @@ namespace Crypto.Services
 
             var response = await client.PostAsync(path, new StringContent(jsonString, Encoding.UTF8, "application/json"));
             //response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
+            string content = await response.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<TRes>(responseBody);
+            return JsonConvert.DeserializeObject<TRes>(content);
         }
 
         public async Task<TRes> GetAsync<TRes>(string path)
         {
             var response = await this.client.GetAsync(path);
             //response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
+            string content = await response.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<TRes>(responseBody);
+            return JsonConvert.DeserializeObject<TRes>(content);
         }
     }
 }

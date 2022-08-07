@@ -35,7 +35,8 @@ namespace Crypto
 
             do
             {
-                var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, GetOpenOrdersRequestBody>("private/get-open-orders", new GetOpenOrdersRequestBody() { page_size = 100, page = page });
+                var requestBody = new GetOpenOrdersRequestBody() { page_size = 100, page = page };
+                var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, GetOpenOrdersRequestBody>("private/get-open-orders", requestBody);
 
                 orders.AddRange(response.result.order_list);
                 done = orders.Count >= response.result.count;
@@ -64,7 +65,6 @@ namespace Crypto
             return new OkObjectResult(body);
         }
     }
-
 
     internal class GetOpenOrdersRequestBody
     {

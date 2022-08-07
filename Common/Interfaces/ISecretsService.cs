@@ -5,8 +5,8 @@ namespace Common.Interfaces
 {
     public interface ISecretsService
     {
-        Task<string> GetSecret(string key);
-        Task<T> GetSecret<T>(string key) where T : new();
+        Task<string> GetSecretAsync(string key);
+        Task<T> GetSecretAsync<T>(string key) where T : new();
     }
 }
 

@@ -1,5 +1,4 @@
-﻿using System;
-using Common;
+﻿using Common;
 using Common.Interfaces;
 using Microsoft.Azure.Cosmos;
 
@@ -27,7 +26,7 @@ namespace DataAccess
             if (this.client == null)
             {
                 string endpoint = this.environmentVariableService.GetVariable(EnvironmentVariableKeys.CosmosDbEndpoint);
-                string key = await this.secretsService.GetSecret(SecretsKeys.CosmosClient);
+                string key = await this.secretsService.GetSecretAsync(SecretsKeys.CosmosClient);
 
                 var client = new CosmosClient(endpoint, key);
                 this.client = client;
