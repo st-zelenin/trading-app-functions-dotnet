@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Common.Interfaces;
 using Crypto.Interfaces;
 using Crypto.Models;
+using DataAccess.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -13,13 +14,13 @@ namespace Crypto
 {
     public class GetTickers
     {
-        private readonly IDbService dbService;
+        private readonly ITradingDbService tradingDbService;
         private readonly IHttpService httpService;
         private readonly IAuthService authService;
 
-        public GetTickers(IDbService dbService, IHttpService httpService, IAuthService authService)
+        public GetTickers(ITradingDbService tradingDbService, IHttpService httpService, IAuthService authService)
         {
-            this.dbService = dbService;
+            this.tradingDbService = tradingDbService;
             this.httpService = httpService;
             this.authService = authService;
         }
@@ -28,7 +29,7 @@ namespace Crypto
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
             var azureUserId = this.authService.GetUserId(req.Headers["Authorization"]);
-            var user = await this.dbService.GetUser(azureUserId);
+            var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
             var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-ticker");
 

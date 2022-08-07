@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Common.Interfaces;
 using Crypto.Interfaces;
 using Crypto.Models;
+using DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -28,7 +29,7 @@ namespace Crypto
         {
             this.authService.ValidateUser(req.Headers["Authorization"]);
 
-            var orders = new List<Order>();
+            var orders = new List<CryptoOrder>();
             var page = 0;
             var done = false;
 

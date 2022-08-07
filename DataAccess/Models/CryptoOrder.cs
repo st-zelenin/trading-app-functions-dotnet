@@ -5,9 +5,9 @@ using CommonOrder = Common.Models.Order;
 using CommonOrderSide = Common.Models.OrderSide;
 using CommonOrderStatus = Common.Models.OrderStatus;
 
-namespace Crypto.Models
+namespace DataAccess.Models
 {
-    public class Order
+    public class CryptoOrder
     {
         public double avg_price { get; set; }
         public long create_time { get; set; }
@@ -69,7 +69,8 @@ namespace Crypto.Models
     [JsonConverter(typeof(StringEnumConverter))]
     public enum OrderType
     {
-        LIMIT = 1
+        LIMIT = 1,
+        MARKET
     }
 
     [JsonConverter(typeof(StringEnumConverter))]

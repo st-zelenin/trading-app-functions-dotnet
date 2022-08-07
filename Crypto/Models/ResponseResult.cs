@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DataAccess.Models;
 
 namespace Crypto.Models
 {
@@ -10,7 +11,7 @@ namespace Crypto.Models
 
     public class OrdersResponseResult
     {
-        public IEnumerable<Order> order_list { get; set; }
+        public IEnumerable<CryptoOrder> order_list { get; set; }
 
         public long count { get; set; }
     }

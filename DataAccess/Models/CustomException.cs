@@ -1,5 +1,5 @@
 ﻿using System;
-namespace Common.Models
+namespace DataAccess.Models
 {
     public class MissingItemResponse : Exception
     {
