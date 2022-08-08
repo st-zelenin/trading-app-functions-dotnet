@@ -6,6 +6,9 @@ namespace DataAccess.Interfaces
     {
         Task<IEnumerable<CryptoAverage>> GetAveragesAsync(string containerId);
         Task<IEnumerable<CryptoOrder>> GetFilledOrdersAsync(string pair, string containerId);
+        Task<IEnumerable<CryptoOrder>> GetOrdersAsync(string pair, string containerId);
+        Task<IEnumerable<CryptoOrder>> GetOrdersBySide(string side, int limit, string containerId);
+        Task UpsertOrdersAsync(IEnumerable<CryptoOrder> orders, string containerId);
     }
 }
 

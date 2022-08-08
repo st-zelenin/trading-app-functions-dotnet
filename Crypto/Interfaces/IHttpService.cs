@@ -7,6 +7,7 @@ namespace Crypto.Interfaces
     public interface IHttpService
     {
         Task<T> GetRequestBody<T>(HttpRequest req);
+        string GetRequiredQueryParam(HttpRequest req, string key);
 
         Task<TRes> GetAsync<TRes>(string path);
 

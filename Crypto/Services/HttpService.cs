@@ -13,6 +13,7 @@ using Common.Models;
 using Crypto.Interfaces;
 using Crypto.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 
 namespace Crypto.Services
@@ -92,6 +93,17 @@ namespace Crypto.Services
             }
 
             return JsonConvert.DeserializeObject<T>(requestBody);
+        }
+
+        public string GetRequiredQueryParam(HttpRequest req, string key)
+        {
+            StringValues side;
+            if (!req.Query.TryGetValue(key, out side))
+            {
+                throw new ArgumentException($"\"{key}\" query param is missing");
+            }
+
+            return side;
         }
 
         public Task<TRes> PostAsync<TRes>(string path)

@@ -35,14 +35,35 @@ namespace DataAccess
             return result;
         }
 
-        public async Task<IEnumerable<CryptoOrder>> GetFilledOrdersAsync(string pair, string containerId)
+        public Task<IEnumerable<CryptoOrder>> GetFilledOrdersAsync(string pair, string containerId)
+        {
+            var query = new QueryDefinition("SELECT * FROM c WHERE c.instrument_name = @pair AND c.status = \"FILLED\" ORDER BY c.update_time DESC")
+                .WithParameter("@pair", pair);
+
+            return this.QueryOrdersAsync(containerId, query);
+        }
+
+        public Task<IEnumerable<CryptoOrder>> GetOrdersAsync(string pair, string containerId)
+        {
+            var query = new QueryDefinition("SELECT * FROM c WHERE c.instrument_name = @pair ORDER BY c.update_time DESC")
+                .WithParameter("@pair", pair);
+
+            return this.QueryOrdersAsync(containerId, query);
+        }
+
+        public Task<IEnumerable<CryptoOrder>> GetOrdersBySide(string side, int limit, string containerId)
+        {
+            var query = new QueryDefinition("SELECT * FROM c WHERE c.status = \"FILLED\" AND c.side = @side ORDER BY c.update_time DESC OFFSET 0 LIMIT @limit")
+                .WithParameter("@side", side)
+                .WithParameter("@limit", limit);
+
+            return this.QueryOrdersAsync(containerId, query);
+        }
+
+        private async Task<IEnumerable<CryptoOrder>> QueryOrdersAsync(string containerId, QueryDefinition query)
         {
             var database = await this.GetDatabaseAsync();
             var container = database.GetContainer(containerId);
-
-
-            var query = new QueryDefinition("SELECT * FROM c WHERE c.instrument_name = @pair AND c.status = \"FILLED\" ORDER BY c.update_time DESC")
-                .WithParameter("@pair", pair);
 
             var result = new List<CryptoOrder>();
 
@@ -58,6 +79,25 @@ namespace DataAccess
             }
 
             return result;
+        }
+
+        public async Task UpsertOrdersAsync(IEnumerable<CryptoOrder> orders, string containerId)
+        {
+            var database = await this.GetDatabaseAsync();
+            var container = await database.CreateContainerIfNotExistsAsync(new ContainerProperties() {
+                Id = containerId,
+                PartitionKeyPath = "/instrument_name"
+            });
+
+            //IBulkExecutor bulkExecutor = new BulkExecutor(client, dataCollection);
+
+            List<Task> tasks = new List<Task>();
+            foreach (var order in orders)
+            {
+                tasks.Add(container.Container.UpsertItemAsync(order));
+            }
+
+            await Task.WhenAll(tasks);
         }
     }
 }

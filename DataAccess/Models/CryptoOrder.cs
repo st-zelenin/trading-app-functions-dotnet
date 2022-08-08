@@ -15,6 +15,7 @@ namespace DataAccess.Models
         public double cumulative_value { get; set; }
         public string fee_currency { get; set; }
         public string instrument_name { get; set; }
+        public string id { get; set; }
         public string order_id { get; set; }
         public double price { get; set; }
         public double quantity { get; set; }

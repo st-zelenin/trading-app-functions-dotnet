@@ -21,6 +21,7 @@ namespace Crypto
             builder.Services.AddSingleton<ITradingDbService, TradingDbService>();
             builder.Services.AddSingleton<ICryptoDbService, CryptoDbService>();
             builder.Services.AddSingleton<IHttpService, HttpService>();
+            builder.Services.AddSingleton<ITradeHistoryService, TradeHistoryService>();
         }
     }
 }

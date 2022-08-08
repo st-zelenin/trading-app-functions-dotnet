@@ -28,7 +28,7 @@ namespace DataAccess
                 string endpoint = this.environmentVariableService.GetVariable(EnvironmentVariableKeys.CosmosDbEndpoint);
                 string key = await this.secretsService.GetSecretAsync(SecretsKeys.CosmosClient);
 
-                var client = new CosmosClient(endpoint, key);
+                var client = new CosmosClient(endpoint, key, new CosmosClientOptions() { AllowBulkExecution = true });
                 this.client = client;
             }
 
