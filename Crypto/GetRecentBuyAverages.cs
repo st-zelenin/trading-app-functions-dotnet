@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using CryptoOrderSide = DataAccess.Models.OrderSide;
+using CryptoOrderSide = DataAccess.Models.CryptoOrderSide;
 
 namespace Crypto
 {

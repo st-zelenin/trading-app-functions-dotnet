@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
@@ -8,12 +7,16 @@ using Crypto.Models;
 using DataAccess.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 
 namespace Crypto
 {
+    internal class InstrumentsResponseResult
+    {
+        public IEnumerable<Instrument> instruments { get; set; }
+    }
+
     public class GetProducts
     {
         private readonly ITradingDbService tradingDbService;
@@ -53,6 +56,4 @@ namespace Crypto
             return new OkObjectResult(body);
         }
     }
-
 }
-

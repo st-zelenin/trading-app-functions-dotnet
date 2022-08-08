@@ -18,9 +18,9 @@ namespace DataAccess.Models
         public string order_id { get; set; }
         public double price { get; set; }
         public double quantity { get; set; }
-        public OrderSide side { get; set; }
-        public OrderStatus status { get; set; }
-        public OrderType type { get; set; }
+        public CryptoOrderSide side { get; set; }
+        public CryptoOrderStatus status { get; set; }
+        public CryptoOrderType type { get; set; }
         public long update_time { get; set; }
 
         public CommonOrder ToCommonOrder()
@@ -31,7 +31,7 @@ namespace DataAccess.Models
                 currencyPair = this.instrument_name,
                 createTimestamp = this.create_time,
                 updateTimestamp = this.update_time,
-                side = this.side == OrderSide.BUY ? CommonOrderSide.buy : CommonOrderSide.sell,
+                side = this.side == CryptoOrderSide.BUY ? CommonOrderSide.buy : CommonOrderSide.sell,
                 amount = this.quantity > 0 ? this.quantity : this.cumulative_quantity,
                 price = this.price > 0 ? this.price : this.avg_price,
                 status = this.ToCommonOrderStatus(),
@@ -42,13 +42,13 @@ namespace DataAccess.Models
         {
             switch (this.status)
             {
-                case OrderStatus.ACTIVE:
+                case CryptoOrderStatus.ACTIVE:
                     return CommonOrderStatus.open;
-                case OrderStatus.FILLED:
+                case CryptoOrderStatus.FILLED:
                     return CommonOrderStatus.closed;
-                case OrderStatus.CANCELED:
-                case OrderStatus.EXPIRED:
-                case OrderStatus.REJECTED:
+                case CryptoOrderStatus.CANCELED:
+                case CryptoOrderStatus.EXPIRED:
+                case CryptoOrderStatus.REJECTED:
                     return CommonOrderStatus.cancelled;
                 default:
                     throw new ArgumentException($"unhandled crypto.com order status: { status }");
@@ -57,7 +57,7 @@ namespace DataAccess.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum OrderStatus
+    public enum CryptoOrderStatus
     {
         ACTIVE = 1,
         CANCELED,
@@ -67,14 +67,14 @@ namespace DataAccess.Models
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum OrderType
+    public enum CryptoOrderType
     {
         LIMIT = 1,
         MARKET
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum OrderSide
+    public enum CryptoOrderSide
     {
         SELL = 1,
         BUY,

@@ -1,17 +1,22 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Common.Interfaces;
+using Crypto.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Crypto.Interfaces;
-using Common.Interfaces;
 
 namespace Crypto
 {
+    internal class CancelOrderRequestData
+    {
+        public string id { get; set; }
+        public string pair { get; set; }
+    }
+
     public class CancelOrder
     {
         private readonly IHttpService httpService;
@@ -26,14 +31,9 @@ namespace Crypto
         [FunctionName("CancelOrder")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
         {
-            string requestBody;
-            using (var streamReader = new StreamReader(req.Body))
-            {
-                requestBody = await streamReader.ReadToEndAsync();
-            }
+            var data = await this.httpService.GetRequestBody<CancelOrderRequestData>(req);
 
-            var data = JsonConvert.DeserializeObject<CancelOrderRequestData>(requestBody);
-            if (data.id == null || data.pair == null)
+            if (data == null || data.id == null || data.pair == null)
             {
                 throw new ArgumentNullException("id or pair is missing");
             }
@@ -44,12 +44,6 @@ namespace Crypto
 
             return new OkObjectResult(body);
         }
-    }
-
-    internal class CancelOrderRequestData
-    {
-        public string id { get; set; }
-        public string pair { get; set; }
     }
 }
 

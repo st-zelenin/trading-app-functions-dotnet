@@ -13,6 +13,19 @@ using CommonOrder = Common.Models.Order;
 
 namespace Crypto
 {
+    internal class GetOpenOrdersRequestBody
+    {
+        public int page_size { get; set; }
+        public int page { get; set; }
+    }
+
+    internal class OrdersResponseResult
+    {
+        public IEnumerable<CryptoOrder> order_list { get; set; }
+
+        public long count { get; set; }
+    }
+
     public class GetOpenOrders
     {
         private readonly IAuthService authService;
@@ -64,12 +77,6 @@ namespace Crypto
 
             return new OkObjectResult(body);
         }
-    }
-
-    internal class GetOpenOrdersRequestBody
-    {
-        public int page_size { get; set; }
-        public int page { get; set; }
     }
 }
 

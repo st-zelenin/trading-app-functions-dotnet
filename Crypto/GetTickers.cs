@@ -12,6 +12,11 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 
 namespace Crypto
 {
+    public class TickersResponseResult
+    {
+        public IEnumerable<Ticker> data { get; set; }
+    }
+
     public class GetTickers
     {
         private readonly ITradingDbService tradingDbService;
@@ -50,4 +55,3 @@ namespace Crypto
         }
     }
 }
-

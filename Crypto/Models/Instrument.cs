@@ -8,8 +8,8 @@ namespace Crypto.Models
         public string instrument_name { get; set; }
         public string quote_currency { get; set; }
         public string base_currency { get; set; }
-        public double price_decimals { get; set; }
-        public decimal quantity_decimals { get; set; }
+        public int price_decimals { get; set; }
+        public int quantity_decimals { get; set; }
         public string min_quantity { get; set; }
 
         public Product ToCommonProduct()

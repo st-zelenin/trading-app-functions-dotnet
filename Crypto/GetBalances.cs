@@ -12,6 +12,11 @@ using CommonBalance = Common.Models.Balance;
 
 namespace Crypto
 {
+    internal class BalancesResponseResult
+    {
+        public IEnumerable<Balance> accounts { get; set; }
+    }
+
     public class GetBalances
     {
         private readonly IAuthService authService;
