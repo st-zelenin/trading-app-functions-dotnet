@@ -126,11 +126,18 @@ namespace Crypto.Services
             var signedBody = new RequestBody<TBody>(body, path).Sign(this.apiKeys);
             string jsonString = JsonConvert.SerializeObject(signedBody);
 
-            Console.WriteLine(jsonString);
 
             var response = await client.PostAsync(path, new StringContent(jsonString, Encoding.UTF8, "application/json"));
             //response.EnsureSuccessStatusCode();
             string content = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"content: {content}");
+
+            if (content.Equals("Too Many Requests"))
+            {
+                throw new TooManyRequestsException();
+            }
+
 
             return JsonConvert.DeserializeObject<TRes>(content);
         }

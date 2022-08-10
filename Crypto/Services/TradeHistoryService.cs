@@ -12,18 +12,21 @@ namespace Crypto.Services
         private readonly ICryptoDbService cryptoDbService;
         private readonly IHttpService httpService;
 
+        public int historyHoursDiff { get; private set; }
+
         public TradeHistoryService(ICryptoDbService cryptoDbService, IHttpService httpService)
         {
             this.cryptoDbService = cryptoDbService;
             this.httpService = httpService;
+            this.historyHoursDiff = 23;
         }
 
         public Task UpdateRecentTradeHistory(string azureUserId)
         {
-            return this.ImportPeriodTradeHistory(DateTime.Now, DateTime.Now.AddHours(-24), azureUserId);
+            return this.ImportPeriodTradeHistory(DateTime.Now, DateTime.Now.AddHours(this.historyHoursDiff), azureUserId);
         }
 
-        private async Task ImportPeriodTradeHistory(DateTime end, DateTime start, string azureUserId)
+        public async Task ImportPeriodTradeHistory(DateTime end, DateTime start, string azureUserId)
         {
             var data = new ImportPeriodTradeHistoryRequestData()
             {
