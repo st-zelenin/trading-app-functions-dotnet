@@ -33,7 +33,7 @@ namespace Crypto
         [FunctionName("GetTickers")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            var azureUserId = this.authService.GetUserId(req.Headers["Authorization"]);
+            var azureUserId = this.authService.GetUserId(req);
             var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
             var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-ticker");

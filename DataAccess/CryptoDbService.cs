@@ -89,9 +89,7 @@ namespace DataAccess
                 PartitionKeyPath = "/instrument_name"
             });
 
-            //IBulkExecutor bulkExecutor = new BulkExecutor(client, dataCollection);
-
-            List<Task> tasks = new List<Task>();
+            var tasks = new List<Task>();
             foreach (var order in orders)
             {
                 tasks.Add(container.Container.UpsertItemAsync(order));

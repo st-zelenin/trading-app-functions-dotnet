@@ -33,7 +33,7 @@ namespace Crypto
                 throw new ArgumentException("\"order\" is missing");
             }
 
-            this.authService.ValidateUser(req.Headers["Authorization"]);
+            this.authService.ValidateUser(req);
 
             var side = order.side == CommonOrderSides.sell ? CryptoOrderSide.SELL : CryptoOrderSide.BUY;
             var instrument = await this.GetInstrument(order.currencyPair);

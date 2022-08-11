@@ -24,7 +24,7 @@ namespace Crypto
         [FunctionName("UpdateRecentHistory")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req)
         {
-            var azureUserId = this.authService.GetUserId(req.Headers["Authorization"]);
+            var azureUserId = this.authService.GetUserId(req);
 
             await this.tradeHistoryService.UpdateRecentTradeHistory(azureUserId);
 

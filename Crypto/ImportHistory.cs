@@ -61,14 +61,11 @@ namespace Crypto
                 end = new DateTime(start.Ticks);
                 start = new DateTime(end.Ticks).AddHours(this.tradeHistoryService.historyHoursDiff);
             } while (end.Ticks > periodEndDate.Ticks);
-
-            Console.WriteLine($"periodEndDate: {periodEndDate}");
         }
 
         [FunctionName("ImportHistory_ImportPeriod")]
         public async Task SayHello([ActivityTrigger] ImportHistoryActivityInput input, ILogger log)
         {
-
             try
             {
                 await this.tradeHistoryService.ImportPeriodTradeHistory(input.end, input.start, input.azureUserId);
@@ -77,6 +74,7 @@ namespace Crypto
             {
                 log.LogWarning("TooManyRequestsException - retry start");
 
+                // TODO: play around with the delay
                 await Task.Delay(TimeSpan.FromSeconds(10));
 
                 await this.tradeHistoryService.ImportPeriodTradeHistory(input.end, input.start, input.azureUserId);
@@ -92,7 +90,7 @@ namespace Crypto
         {
             var data = await req.Content.ReadAsAsync<ImportHistoryStartRequestData>();
 
-            var azureUserId = this.authService.GetUserId(req.Headers.GetValues("Authorization").First()) + "004";
+            var azureUserId = this.authService.GetUserId(req);
 
             string instanceId = await starter.StartNewAsync("ImportHistory",
                 new ImportHistoryOrchestratorInput() { azureUserId = azureUserId, periodMonths = data.periodMonths });

@@ -38,7 +38,7 @@ namespace Crypto
                 throw new ArgumentNullException("id or pair is missing");
             }
 
-            this.authService.ValidateUser(req.Headers["Authorization"]);
+            this.authService.ValidateUser(req);
 
             var body = await this.httpService.PostAsync("private/cancel-order", new { order_id = data.id, instrument_name = data.pair });
 

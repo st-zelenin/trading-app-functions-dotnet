@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using CryptoOrderSide = DataAccess.Models.CryptoOrderSide;
+using ByBitOrderSide = DataAccess.Models.CryptoOrderSide;
 
 namespace Crypto
 {
@@ -28,7 +28,7 @@ namespace Crypto
         [FunctionName("GetRecentBuyAverages")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            var azureUserId = this.authService.GetUserId(req.Headers["Authorization"]);
+            var azureUserId = this.authService.GetUserId(req);
             var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
             var body = new Dictionary<string, AverageSide>();
@@ -44,10 +44,10 @@ namespace Crypto
         {
             var trades = await this.cryptoDbService.GetFilledOrdersAsync(pair, continerId);
 
-            var lastSell = trades.FirstOrDefault(trade => trade.side == CryptoOrderSide.SELL);
+            var lastSell = trades.FirstOrDefault(trade => trade.side == ByBitOrderSide.SELL);
 
             var recent = lastSell == null ? trades
-                : trades.Where(trade => trade.side == CryptoOrderSide.BUY && trade.update_time > lastSell.create_time);
+                : trades.Where(trade => trade.side == ByBitOrderSide.BUY && trade.update_time > lastSell.create_time);
 
             return recent.Aggregate(
                 new AverageSide() { money = 0, price = 0, volume = 0 },

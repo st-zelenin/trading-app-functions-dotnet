@@ -40,7 +40,7 @@ namespace Crypto
         [FunctionName("GetOpenOrders")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            this.authService.ValidateUser(req.Headers["Authorization"]);
+            this.authService.ValidateUser(req);
 
             var orders = new List<CryptoOrder>();
             var page = 0;

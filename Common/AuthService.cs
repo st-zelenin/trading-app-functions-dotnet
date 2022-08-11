@@ -3,12 +3,32 @@ using Common.Interfaces;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
+using Microsoft.AspNetCore.Http;
 
 namespace Common
 {
     public class AuthService: IAuthService
     {
-        public string GetUserId(string authorizationHeader)
+        public string GetUserId(HttpRequest req)
+        {
+            string authorizationHeader = req.Headers["Authorization"];
+
+            return this.DecodeAuthorizationHeader(authorizationHeader);
+        }
+
+        public string GetUserId(HttpRequestMessage req)
+        {
+            var authorizationHeader = req.Headers.GetValues("Authorization").First();
+
+            return this.DecodeAuthorizationHeader(authorizationHeader);
+        }
+
+        public void ValidateUser(HttpRequest req)
+        {
+            this.GetUserId(req);
+        }
+
+        private string DecodeAuthorizationHeader(string authorizationHeader)
         {
             if (string.IsNullOrEmpty(authorizationHeader))
             {
@@ -41,11 +61,6 @@ namespace Common
             }
 
             return oid;
-        }
-
-        public void ValidateUser(string authorizationHeader)
-        {
-            this.GetUserId(authorizationHeader);
         }
     }
 }

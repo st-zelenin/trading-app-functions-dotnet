@@ -24,7 +24,7 @@ namespace Crypto
         [FunctionName("GetCurrencyPairs")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            this.authService.ValidateUser(req.Headers["Authorization"]);
+            this.authService.ValidateUser(req);
 
             var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-ticker");
 

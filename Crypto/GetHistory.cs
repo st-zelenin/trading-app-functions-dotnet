@@ -36,7 +36,7 @@ namespace Crypto
         {
             var pair = this.httpService.GetRequiredQueryParam(req, "pair");
 
-            var azureUserId = this.authService.GetUserId(req.Headers["Authorization"]);
+            var azureUserId = this.authService.GetUserId(req);
 
             await this.tradeHistoryService.UpdateRecentTradeHistory(azureUserId);
 

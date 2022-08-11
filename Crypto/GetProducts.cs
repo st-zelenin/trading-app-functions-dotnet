@@ -35,7 +35,7 @@ namespace Crypto
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req
         )
         {
-            var azureUserId = this.authService.GetUserId(req.Headers["Authorization"]);
+            var azureUserId = this.authService.GetUserId(req);
             var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
             var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");

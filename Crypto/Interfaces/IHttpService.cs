@@ -1,14 +1,11 @@
 ﻿using System.Threading.Tasks;
+using Common.Interfaces;
 using Crypto.Models;
-using Microsoft.AspNetCore.Http;
 
 namespace Crypto.Interfaces
 {
-    public interface IHttpService
+    public interface IHttpService : IBaseHttpService
     {
-        Task<T> GetRequestBody<T>(HttpRequest req);
-        string GetRequiredQueryParam(HttpRequest req, string key);
-
         Task<TRes> GetAsync<TRes>(string path);
 
         Task<TRes> PostAsync<TRes>(string path);

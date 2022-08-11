@@ -10,6 +10,7 @@ namespace Common
     {
         public static string CosmosClient => "COSMOS-CLIENT-KEY";
         public static string CryptoApiKey => "CRYPTO-SPOT-TRADE";
+        public static string ByBitApiKey => "BYBIT-SPOT";
     }
 
     public class SecretsService : ISecretsService

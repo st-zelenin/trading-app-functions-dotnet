@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -12,8 +11,6 @@ using Common.Interfaces;
 using Common.Models;
 using Crypto.Interfaces;
 using Crypto.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 
 namespace Crypto.Services
@@ -67,7 +64,7 @@ namespace Crypto.Services
         }
     }
 
-    public class HttpService : IHttpService
+    public class HttpService : BaseHttpService, IHttpService
     {
         private readonly ISecretsService secretsService;
         private ExchangeApiKeysSecret apiKeys;
@@ -82,28 +79,6 @@ namespace Crypto.Services
             };
 
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
-        }
-
-        public async Task<T> GetRequestBody<T>(HttpRequest req)
-        {
-            string requestBody;
-            using (var streamReader = new StreamReader(req.Body))
-            {
-                requestBody = await streamReader.ReadToEndAsync();
-            }
-
-            return JsonConvert.DeserializeObject<T>(requestBody);
-        }
-
-        public string GetRequiredQueryParam(HttpRequest req, string key)
-        {
-            StringValues side;
-            if (!req.Query.TryGetValue(key, out side))
-            {
-                throw new ArgumentException($"\"{key}\" query param is missing");
-            }
-
-            return side;
         }
 
         public Task<TRes> PostAsync<TRes>(string path)
