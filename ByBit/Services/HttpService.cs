@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using ByBit.Interfaces;
+using ByBit.Models;
 using Common;
 using Common.Interfaces;
 using Common.Models;
@@ -39,6 +40,39 @@ namespace ByBit.Services
 
         public async Task<TRes> GetAsync<TRes, TParams>(string path, TParams parameters)
         {
+            var paramsString = await this.GetSignedRequestParams(parameters);
+
+            var response = await client.GetAsync($"{path}?{paramsString}");
+            //response.EnsureSuccessStatusCode();
+            string content = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<TRes>(content);
+        }
+
+        public async Task<TRes> DeleteAsync<TRes, TParams>(string path, TParams parameters)
+        {
+            var paramsString = await this.GetSignedRequestParams(parameters);
+
+            var response = await client.DeleteAsync($"{path}?{paramsString}");
+            //response.EnsureSuccessStatusCode();
+            string content = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<TRes>(content);
+        }
+
+        public async Task<BaseResponse> PostAsync<TBody>(string path, TBody body)
+        {
+            var paramsString = await this.GetSignedRequestParams(body);
+
+            var response = await client.PostAsync($"{path}?{paramsString}", null);
+            //response.EnsureSuccessStatusCode();
+            string content = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<BaseResponse>(content);
+        }
+
+        private async Task<string> GetSignedRequestParams<T>(T data)
+        {
             if (this.apiKeys == null)
             {
                 this.apiKeys = await this.secretsService.GetSecretAsync<ExchangeApiKeysSecret>(SecretsKeys.ByBitApiKey);
@@ -48,9 +82,9 @@ namespace ByBit.Services
             sortedDictionary.Add("api_key", this.apiKeys.apiKey);
             sortedDictionary.Add("timestamp", new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds());
 
-            var sortedParams = TypeDescriptor.GetProperties(parameters)
+            var sortedParams = TypeDescriptor.GetProperties(data)
                 .Cast<PropertyDescriptor>()
-                .Select(pd => new { Name = pd.Name, Value = pd.GetValue(parameters) })
+                .Select(pd => new { Name = pd.Name, Value = pd.GetValue(data) })
                 .Aggregate(sortedDictionary, (acc, pair) =>
                 {
                     acc.Add(pair.Name, pair.Value);
@@ -75,61 +109,7 @@ namespace ByBit.Services
 
             var sign = BitConverter.ToString(hash).Replace("-", "").ToLower();
 
-            var response = await client.GetAsync($"{path}?{paramsString}&sign={sign}");
-            //response.EnsureSuccessStatusCode();
-            string content = await response.Content.ReadAsStringAsync();
-
-            //Console.WriteLine($"content: {content}");
-
-            return JsonConvert.DeserializeObject<TRes>(content);
+            return $"{paramsString}&sign={sign}";
         }
-
-        //public async Task<TRes> PostAsync<TRes, TBody>(string path, TBody body)
-        //{
-        //    if (this.apiKeys == null)
-        //    {
-        //        this.apiKeys = await this.secretsService.GetSecretAsync<ExchangeApiKeysSecret>(SecretsKeys.ByBitApiKey);
-        //    }
-
-        //    var sortedDictionary = TypeDescriptor.GetProperties(body)
-        //        .Cast<PropertyDescriptor>()
-        //        .Select(pd => new { Name = pd.Name, Value = pd.GetValue(body) })
-        //        .Aggregate(new SortedDictionary<string, object>(), (acc, pair) => {
-        //            acc.Add(pair.Name, pair.Value);
-        //            return acc;
-        //        });
-
-        //    sortedDictionary.Add("api_key", this.apiKeys.apiKey);
-        //    sortedDictionary.Add("timestamp", new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds());
-
-        //    var jsonString = JsonConvert.SerializeObject(sortedDictionary);
-
-        //    Console.WriteLine(jsonString);
-
-        //    var encoding = new ASCIIEncoding();
-
-        //    byte[] payload = encoding.GetBytes(jsonString);
-        //    byte[] secret = encoding.GetBytes(apiKeys.secretKey);
-
-        //    byte[] hash;
-        //    using (var hmac = new HMACSHA256(secret))
-        //    {
-        //        hash = hmac.ComputeHash(payload);
-        //    }
-
-        //    var sign = BitConverter.ToString(hash).Replace("-", "").ToLower();
-
-        //    sortedDictionary.Add("sign", sign);
-
-
-        //    var response = await client.PostAsync(path,
-        //        new StringContent(JsonConvert.SerializeObject(sortedDictionary), Encoding.UTF8, "application/json"));
-        //    //response.EnsureSuccessStatusCode();
-        //    string content = await response.Content.ReadAsStringAsync();
-
-        //    Console.WriteLine($"content: {content}");
-
-        //    return JsonConvert.DeserializeObject<TRes>(content);
-        //}
     }
 }

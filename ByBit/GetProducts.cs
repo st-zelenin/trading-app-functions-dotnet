@@ -36,13 +36,13 @@ namespace ByBit
             var azureUserId = this.authService.GetUserId(req);
             var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-            var instruments = await this.httpService.GetAsync<ResponseWithResult<IEnumerable<Instrument>>>("/spot/v1/symbols");
+            var products = await this.httpService.GetAsync<ResponseWithResult<IEnumerable<Product>>>("/spot/v1/symbols");
 
             var body = user.bybit_pairs.Aggregate(
                 new Dictionary<string, Common.Models.Product>(),
                 (acc, pair) =>
                 {
-                    var raw = instruments.result.First(x => x.name == pair);
+                    var raw = products.result.First(x => x.name == pair);
                     if (raw != null)
                     {
                         acc.Add(pair, raw.ToCommonProduct());

@@ -45,7 +45,7 @@ namespace DataAccess.Models
                 currencyPair = this.symbol,
                 createTimestamp = long.Parse(this.time),
                 updateTimestamp = long.Parse(this.updateTime),
-                side = this.side == ByBitOrderSide.BUY ? CommonOrderSide.buy : CommonOrderSide.sell,
+                side = this.side == ByBitOrderSide.Buy ? CommonOrderSide.buy : CommonOrderSide.sell,
                 amount = amount,
                 price = this.type == ByBitOrderType.MARKET ? double.Parse(this.avgPrice) : double.Parse(this.price),
                 status = this.ToCommonOrderStatus(),
@@ -95,8 +95,8 @@ namespace DataAccess.Models
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ByBitOrderSide
     {
-        SELL = 1,
-        BUY,
+        Sell = 1,
+        Buy,
     }
 }
 

@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Common.Interfaces;
+using ByBit.Models;
 
 namespace ByBit.Interfaces
 {
@@ -7,6 +8,7 @@ namespace ByBit.Interfaces
     {
         Task<TRes> GetAsync<TRes>(string path);
         Task<TRes> GetAsync<TRes, TParams>(string path, TParams parameters);
-        //Task<TRes> PostAsync<TRes, TBody>(string path, TBody body);
+        Task<TRes> DeleteAsync<TRes, TParams>(string path, TParams parameters);
+        Task<BaseResponse> PostAsync<TBody>(string path, TBody body);
     }
 }
