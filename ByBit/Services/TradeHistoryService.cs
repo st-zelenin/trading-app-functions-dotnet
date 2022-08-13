@@ -45,7 +45,7 @@ namespace ByBit.Services
             return this.ImportTradeHistoryAsync(data, azureUserId);
         }
 
-        private async Task ImportTradeHistoryAsync<T>(T data, string azureUserId) where T: OrderHistoryRequestParams
+        private async Task ImportTradeHistoryAsync<T>(T data, string azureUserId) where T : OrderHistoryRequestParams
         {
             var response = await this.httpService.GetAsync<ResponseWithResult<IEnumerable<ByBitOrder>>, OrderHistoryRequestParams>
                 ("/spot/v1/history-orders", data);
@@ -54,7 +54,7 @@ namespace ByBit.Services
                 return;
             }
 
-            var filledOrders = response.result.Where(o => o.status == ByBitOrderStatus.FILLED);
+            var filledOrders = response.result.Where(o => o.status == ByBitOrderStatus.FILLED || o.type == ByBitOrderType.MARKET);
             if (filledOrders.Count() == 0)
             {
                 return;

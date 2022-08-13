@@ -54,7 +54,8 @@ namespace DataAccess
 
         public Task<IEnumerable<ByBitOrder>> GetOrdersBySide(string side, int limit, string containerId)
         {
-            var query = new QueryDefinition("SELECT * FROM c WHERE c.status = \"FILLED\" AND c.side = @side ORDER BY c.updateTime DESC OFFSET 0 LIMIT @limit")
+            // TODO: remove UPPER
+            var query = new QueryDefinition("SELECT * FROM c WHERE c.status = \"FILLED\" AND UPPER(c.side) = @side ORDER BY c.updateTime DESC OFFSET 0 LIMIT @limit")
                 .WithParameter("@side", side)
                 .WithParameter("@limit", limit);
 
