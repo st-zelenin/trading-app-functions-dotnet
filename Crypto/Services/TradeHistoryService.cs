@@ -18,7 +18,7 @@ namespace Crypto.Services
         {
             this.cryptoDbService = cryptoDbService;
             this.httpService = httpService;
-            this.historyHoursDiff = 23;
+            this.historyHoursDiff = -23;
         }
 
         public Task UpdateRecentTradeHistory(string azureUserId)
