@@ -15,6 +15,8 @@ namespace Gate
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
+            builder.Services.AddLogging();
+
             builder.Services.AddSingleton<IEnvironmentVariableService, EnvironmentVariableService>();
             builder.Services.AddSingleton<IAuthService, AuthService>();
             builder.Services.AddSingleton<ISecretsService, SecretsService>();

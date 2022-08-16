@@ -1,37 +1,35 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using System.Web;
+using Common;
 using Common.Interfaces;
 using Common.Models;
 using Gate.Interfaces;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Security.Cryptography;
-using Common;
-using System.Text;
-using Microsoft.AspNetCore.WebUtilities;
-using System.ComponentModel;
-using System.Linq;
-using System.Web;
-using System.Collections.Generic;
 
 namespace Gate.Services
 {
     public class HttpService : BaseHttpService, IHttpService
     {
         private readonly ISecretsService secretsService;
+        private readonly ILogger<IHttpService> log;
         private ExchangeApiKeysSecret apiKeys;
         private readonly HttpClient client;
 
         const string PREFIX = "/api/v4";
 
-        public HttpService(ISecretsService secretsService)
+        public HttpService(ISecretsService secretsService, ILogger<IHttpService> log)
         {
             this.secretsService = secretsService;
-            this.client = new HttpClient()
-            {
-                //BaseAddress = new Uri("https://api.gateio.ws/api/v4"),
-            };
+            this.log = log;
 
+            this.client = new HttpClient();
             this.client.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
@@ -47,12 +45,12 @@ namespace Gate.Services
 
         public Task<TRes> PostAsync<TRes, TBody>(string path, TBody body)
         {
-            return this.GetSignatureAsync<TRes, TBody, object>(HttpMethod.Get, path, body, null);
+            return this.GetSignatureAsync<TRes, TBody, object>(HttpMethod.Post, path, body, null);
         }
 
         public Task<TRes> PostAsync<TRes, TBody, TQuery>(string path, TBody body, TQuery query)
         {
-            return this.GetSignatureAsync<TRes, TBody, TQuery>(HttpMethod.Get, path, body, query);
+            return this.GetSignatureAsync<TRes, TBody, TQuery>(HttpMethod.Post, path, body, query);
         }
 
         public Task<TRes> DeleteAsync<TRes, TQuery>(string path, TQuery query)
@@ -68,66 +66,10 @@ namespace Gate.Services
                 this.client.DefaultRequestHeaders.Add("KEY", this.apiKeys.apiKey);
             }
 
-            var serializedBody = body == null ? "" : JsonConvert.SerializeObject(body);
-
-            //var encoding = new ASCIIEncoding();
-            //byte[] payload = encoding.GetBytes(serializedBody);
-
-            //byte[] bodyHash;
-            //using (var hmac = new HMACSHA512())
-            //{
-            //    bodyHash = hmac.ComputeHash(payload);
-            //}
-
-            //var hashedPayload = BitConverter.ToString(bodyHash).Replace("-", "").ToLower(); // TODO: ????
-            var timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(); // TODO: ????
-            //var formattedMessage = $"{method}\n{PREFIX}{path}\n{query}\n{hashedPayload}\n{timestamp}";
-
-            //Console.WriteLine($"formattedMessage = {formattedMessage}");
-
-            //byte[] secret = encoding.GetBytes(this.apiKeys.secretKey);
-            //byte[] message = encoding.GetBytes(formattedMessage);
-
-            //byte[] headerHash;
-            //using (var hmac = new HMACSHA512(secret))
-            //{
-            //    headerHash = hmac.ComputeHash(message);
-            //}
-
-
+            var serializedBody = body == null ? string.Empty : JsonConvert.SerializeObject(body);
+            var timestamp = new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds();
             var queryString = this.GetQueryString(query);
-            //var queryString = "";
-            //if (query != null)
-            //{
-            //    queryString = TypeDescriptor.GetProperties(query)
-            //        .Cast<PropertyDescriptor>()
-            //        .Aggregate("", (acc, curr) =>
-            //        {
-            //            acc += $"{curr.Name}={HttpUtility.UrlEncode(curr.GetValue(query).ToString())}";
-            //            return acc;
-            //        });
-            //}
-
             var signature = this.GetSignature(method, path, timestamp, serializedBody, queryString);
-
-            Console.WriteLine($"signature = {signature}");
-
-
-
-            //var queryDictionary = new Dictionary<string, string>();
-            //if (query != null)
-            //{
-            //    TypeDescriptor.GetProperties(query)
-            //        .Cast<PropertyDescriptor>()
-            //        .Aggregate(queryDictionary, (acc, curr) =>
-            //        {
-            //            acc.Add(curr.Name, HttpUtility.UrlEncode(curr.GetValue(query).ToString()));
-            //            return acc;
-            //        });
-            //}
-
-            //var uriString = QueryHelpers.AddQueryString($"https://api.gateio.ws/api/v4{PREFIX}/{path}", queryDictionary);
-
             var url = $"https://api.gateio.ws{PREFIX}{path}";
 
             var requestMessage = new HttpRequestMessage()
@@ -138,8 +80,7 @@ namespace Gate.Services
 
             if (body != null)
             {
-                var jsonString = JsonConvert.SerializeObject(body);
-                requestMessage.Content = new StringContent(jsonString, Encoding.UTF8, "application/json");
+                requestMessage.Content = new StringContent(serializedBody, Encoding.UTF8, "application/json");
             }
 
             requestMessage.Headers.Add("KEY", this.apiKeys.apiKey);
@@ -148,10 +89,15 @@ namespace Gate.Services
 
             var response = await this.client.SendAsync(requestMessage);
 
-            //response.EnsureSuccessStatusCode();
             string content = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                log.LogError($"request failed: {content}");
+                throw new HttpRequestException($"\"{method}\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            }
 
             Console.WriteLine($"content: {content}");
+            log.LogInformation($"\"{method}\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
 
             return JsonConvert.DeserializeObject<TRes>(content);
         }
@@ -171,16 +117,8 @@ namespace Gate.Services
         private string GetSignature(HttpMethod method, string path, long timestamp, string body, string query)
         {
             var encoding = new ASCIIEncoding();
-            //byte[] bodyBytes = encoding.GetBytes(body);
-
-            //byte[] bodyHash;
-            //using (var hmac = new HMACSHA512())
-            //{
-            //    bodyHash = hmac.ComputeHash(bodyBytes);
-            //}
-
             var bodyHashString = this.GetBodyHash(body, encoding);
-            //var bodyHashString = BitConverter.ToString(bodyHash).Replace("-", "").ToLower(); // TODO: ????
+
             var formattedMessage = $"{method}\n{PREFIX}{path}\n{query}\n{bodyHashString}\n{timestamp}";
 
             Console.WriteLine($"formattedMessage = {formattedMessage}");
@@ -206,7 +144,7 @@ namespace Gate.Services
                 bodyHash = sha512.ComputeHash(bodyBytes);
             }
 
-            return BitConverter.ToString(bodyHash).Replace("-", "").ToLower(); // TODO: ????
+            return BitConverter.ToString(bodyHash).Replace("-", "").ToLower();
         }
     }
 }
