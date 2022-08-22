@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
@@ -18,19 +19,18 @@ namespace Gate.Services
     public class HttpService : BaseHttpService, IHttpService
     {
         private readonly ISecretsService secretsService;
-        private readonly ILogger<IHttpService> log;
+        private readonly ILogger<HttpService> log;
         private ExchangeApiKeysSecret apiKeys;
         private readonly HttpClient client;
 
         const string PREFIX = "/api/v4";
 
-        public HttpService(ISecretsService secretsService, ILogger<IHttpService> log)
+        public HttpService(ISecretsService secretsService, ILogger<HttpService> log, HttpClient client)
         {
             this.secretsService = secretsService;
             this.log = log;
 
-            this.client = new HttpClient();
-            this.client.DefaultRequestHeaders.Add("Accept", "application/json");
+            this.client = client;
         }
 
         public Task<TRes> GetAsync<TRes>(string path)
@@ -104,14 +104,20 @@ namespace Gate.Services
 
         private string GetQueryString<T>(T query)
         {
-            return query == null ? ""
-                : TypeDescriptor.GetProperties(query)
-                    .Cast<PropertyDescriptor>()
-                    .Aggregate("", (acc, curr) =>
-                    {
-                        acc += $"{curr.Name}={HttpUtility.UrlEncode(curr.GetValue(query).ToString())}";
-                        return acc;
-                    });
+            if (query == null)
+            {
+                return "";
+            }
+
+            var paramsPairs = TypeDescriptor.GetProperties(query)
+                .Cast<PropertyDescriptor>()
+                .Aggregate(new List<string>(), (acc, curr) =>
+                {
+                    acc.Add($"{curr.Name}={HttpUtility.UrlEncode(curr.GetValue(query).ToString())}");
+                    return acc;
+                });
+
+            return string.Join('&', paramsPairs);
         }
 
         private string GetSignature(HttpMethod method, string path, long timestamp, string body, string query)

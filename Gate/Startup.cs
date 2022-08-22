@@ -21,9 +21,15 @@ namespace Gate
             builder.Services.AddSingleton<IAuthService, AuthService>();
             builder.Services.AddSingleton<ISecretsService, SecretsService>();
             builder.Services.AddSingleton<ITradingDbService, TradingDbService>();
-            builder.Services.AddSingleton<ICryptoDbService, CryptoDbService>();
-            builder.Services.AddSingleton<IHttpService, HttpService>();
-            //builder.Services.AddSingleton<ITradeHistoryService, TradeHistoryService>();
+            builder.Services.AddSingleton<IGateDbService, GateDbService>();
+
+            builder.Services.AddTransient<IHttpService, HttpService>();
+            builder.Services.AddSingleton<ITradeHistoryService, TradeHistoryService>();
+
+            builder.Services.AddHttpClient<IHttpService, HttpService>(client =>
+            {
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
         }
     }
 }

@@ -37,14 +37,17 @@ namespace DataAccess
 
         protected async Task<Database> GetDatabaseAsync()
         {
-            //if (this.database == null)
-            //{
-            var client = await GetClientAsync();
-            return client.GetDatabase(this.dbName);
-            //this.database = client.GetDatabase(this.dbName);
-            //}
+            if (this.database == null)
+            {
+                var client = await GetClientAsync();
+                var databaseResponse = await client.CreateDatabaseIfNotExistsAsync(this.dbName);
 
-            //return this.database;
+                //return databaseResponse.Database;
+                this.database = databaseResponse.Database;
+                //this.database = client.GetDatabase(this.dbName);
+            }
+
+            return this.database;
         }
     }
 }

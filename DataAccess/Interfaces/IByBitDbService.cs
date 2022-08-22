@@ -10,7 +10,6 @@ namespace DataAccess.Interfaces
         Task<IEnumerable<ByBitOrder>> GetOrdersAsync(string pair, string containerId);
         Task<IEnumerable<ByBitOrder>> GetOrdersBySide(string side, int limit, string containerId);
         Task UpsertOrdersAsync(IEnumerable<ByBitOrder> orders, string containerId);
-
     }
 }
 
