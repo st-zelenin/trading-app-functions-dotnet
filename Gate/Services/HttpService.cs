@@ -29,7 +29,6 @@ namespace Gate.Services
         {
             this.secretsService = secretsService;
             this.log = log;
-
             this.client = client;
         }
 
@@ -96,7 +95,6 @@ namespace Gate.Services
                 throw new HttpRequestException($"\"{method}\" to \"{path}\" failed with code \"{response.StatusCode}\"");
             }
 
-            Console.WriteLine($"content: {content}");
             log.LogInformation($"\"{method}\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
 
             return JsonConvert.DeserializeObject<TRes>(content);
@@ -126,8 +124,6 @@ namespace Gate.Services
             var bodyHashString = this.GetBodyHash(body, encoding);
 
             var formattedMessage = $"{method}\n{PREFIX}{path}\n{query}\n{bodyHashString}\n{timestamp}";
-
-            Console.WriteLine($"formattedMessage = {formattedMessage}");
 
             byte[] secret = encoding.GetBytes(this.apiKeys.secretKey);
             byte[] message = encoding.GetBytes(formattedMessage);

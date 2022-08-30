@@ -19,20 +19,8 @@ namespace DataAccess
 
             var database = await this.GetDatabaseAsync();
             var container = database.GetContainer(containerId);
-            var result = new List<CryptoAverage>();
 
-            using (var feed = container.GetItemQueryIterator<CryptoAverage>(query))
-            {
-                while (feed.HasMoreResults)
-                {
-                    foreach (var average in await feed.ReadNextAsync())
-                    {
-                        result.Add(average);
-                    }
-                }
-            }
-
-            return result;
+            return await this.ExecuteReadQueryAsync<CryptoAverage>(query, container);
         }
 
         public Task<IEnumerable<CryptoOrder>> GetFilledOrdersAsync(string pair, string containerId)
@@ -65,20 +53,7 @@ namespace DataAccess
             var database = await this.GetDatabaseAsync();
             var container = database.GetContainer(containerId);
 
-            var result = new List<CryptoOrder>();
-
-            using (var feed = container.GetItemQueryIterator<CryptoOrder>(query))
-            {
-                while (feed.HasMoreResults)
-                {
-                    foreach (var order in await feed.ReadNextAsync())
-                    {
-                        result.Add(order);
-                    }
-                }
-            }
-
-            return result;
+            return await this.ExecuteReadQueryAsync<CryptoOrder>(query, container);
         }
 
         public async Task UpsertOrdersAsync(IEnumerable<CryptoOrder> orders, string containerId)

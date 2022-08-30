@@ -85,7 +85,7 @@ namespace Gate.Services
             }
             catch (Exception ex)
             {
-                this.log.LogError($"failed to import.\nMessage = \"{ ex.Message}\"\nStackTrace = \"{ex.StackTrace}\"");
+                this.log.LogError($"failed to import.\nMessage = \"{ex.Message}\"\nStackTrace = \"{ex.StackTrace}\"");
                 throw;
             }
         }

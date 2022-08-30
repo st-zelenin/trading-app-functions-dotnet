@@ -1,5 +1,6 @@
 ﻿using System;
 using Common.Interfaces;
+using Common.Models;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
@@ -9,18 +10,35 @@ namespace Common
 {
     public class AuthService: IAuthService
     {
+        public AzureUser GetAzureUser(HttpRequest req)
+        {
+            string authorizationHeader = req.Headers["Authorization"];
+
+            var dictionary = this.DecodeAuthorizationHeader(authorizationHeader);
+
+            var oid = this.GetDecodedValue(dictionary, "oid");
+            var name = this.GetDecodedValue(dictionary, "name");
+
+            return new AzureUser()
+            {
+                oid = oid,
+                name = name
+            };
+        }
+
         public string GetUserId(HttpRequest req)
         {
             string authorizationHeader = req.Headers["Authorization"];
 
-            return this.DecodeAuthorizationHeader(authorizationHeader);
+            //return this.GetOid(authorizationHeader) + "000111222333";
+            return this.GetOid(authorizationHeader);
         }
 
         public string GetUserId(HttpRequestMessage req)
         {
             var authorizationHeader = req.Headers.GetValues("Authorization").First();
 
-            return this.DecodeAuthorizationHeader(authorizationHeader);
+            return this.GetOid(authorizationHeader);
         }
 
         public void ValidateUser(HttpRequest req)
@@ -28,7 +46,7 @@ namespace Common
             this.GetUserId(req);
         }
 
-        private string DecodeAuthorizationHeader(string authorizationHeader)
+        private IDictionary<string, string> DecodeAuthorizationHeader(string authorizationHeader)
         {
             if (string.IsNullOrEmpty(authorizationHeader))
             {
@@ -47,20 +65,29 @@ namespace Common
             var validationParameters = ValidationParameters.Default;
             validationParameters.ValidateSignature = false;
 
-            var dictionary = JwtBuilder.Create()
+            return JwtBuilder.Create()
                 .WithValidationParameters(validationParameters)
                 .WithAlgorithm(new HMACSHA256Algorithm())
                 .Decode<IDictionary<string, string>>(token);
+        }
 
-            string? oid;
-            dictionary.TryGetValue("oid", out oid);
+        private string GetOid(string authorizationHeader)
+        {
+            var dictionary = this.DecodeAuthorizationHeader(authorizationHeader);
+            return this.GetDecodedValue(dictionary, "oid");
+        }
 
-            if (string.IsNullOrEmpty(oid))
+        private string GetDecodedValue(IDictionary<string, string> dictionary, string key)
+        {
+            string? value;
+            dictionary.TryGetValue(key, out value);
+
+            if (string.IsNullOrEmpty(value))
             {
-                throw new Exception("oid missing");
+                throw new Exception($"key '{key}' is missing");
             }
 
-            return oid;
+            return value;
         }
     }
 }

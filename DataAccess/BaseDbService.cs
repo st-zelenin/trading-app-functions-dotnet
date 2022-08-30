@@ -49,6 +49,29 @@ namespace DataAccess
 
             return this.database;
         }
+
+        protected Task<IEnumerable<T>> ExecuteReadQueryAsync<T>(string query, Container container)
+        {
+            return this.ExecuteReadQueryAsync<T>(new QueryDefinition(query), container);
+        }
+
+        protected async Task<IEnumerable<T>> ExecuteReadQueryAsync<T>(QueryDefinition query, Container container)
+        {
+            var result = new List<T>();
+
+            using (var feed = container.GetItemQueryIterator<T>(query))
+            {
+                while (feed.HasMoreResults)
+                {
+                    foreach (var average in await feed.ReadNextAsync())
+                    {
+                        result.Add(average);
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }
 

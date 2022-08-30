@@ -20,20 +20,8 @@ namespace DataAccess
 
             var database = await this.GetDatabaseAsync();
             var container = database.GetContainer(containerId);
-            var result = new List<ByBitAverage>();
 
-            using (var feed = container.GetItemQueryIterator<ByBitAverage>(query))
-            {
-                while (feed.HasMoreResults)
-                {
-                    foreach (var average in await feed.ReadNextAsync())
-                    {
-                        result.Add(average);
-                    }
-                }
-            }
-
-            return result;
+            return await this.ExecuteReadQueryAsync<ByBitAverage>(query, container);
         }
 
         public Task<IEnumerable<ByBitOrder>> GetFilledOrdersAsync(string pair, string containerId)
@@ -67,20 +55,7 @@ namespace DataAccess
             var database = await this.GetDatabaseAsync();
             var container = database.GetContainer(containerId);
 
-            var result = new List<ByBitOrder>();
-
-            using (var feed = container.GetItemQueryIterator<ByBitOrder>(query))
-            {
-                while (feed.HasMoreResults)
-                {
-                    foreach (var order in await feed.ReadNextAsync())
-                    {
-                        result.Add(order);
-                    }
-                }
-            }
-
-            return result;
+            return await this.ExecuteReadQueryAsync<ByBitOrder>(query, container);
         }
 
         public async Task UpsertOrdersAsync(IEnumerable<ByBitOrder> orders, string containerId)

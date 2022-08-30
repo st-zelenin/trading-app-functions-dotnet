@@ -66,21 +66,35 @@ namespace Crypto
         [FunctionName("ImportHistory_ImportPeriod")]
         public async Task SayHello([ActivityTrigger] ImportHistoryActivityInput input, ILogger log)
         {
-            try
-            {
-                await this.tradeHistoryService.ImportPeriodTradeHistory(input.end, input.start, input.azureUserId);
-            }
-            catch (TooManyRequestsException)
-            {
-                log.LogWarning("TooManyRequestsException - retry start");
+            //try
+            //{
+            var requestStart = DateTime.Now;
 
-                // TODO: play around with the delay
-                await Task.Delay(TimeSpan.FromSeconds(10));
+            await this.tradeHistoryService.ImportPeriodTradeHistory(input.end, input.start, input.azureUserId);
 
-                await this.tradeHistoryService.ImportPeriodTradeHistory(input.end, input.start, input.azureUserId);
+            //var waitTicks = 1000 * TimeSpan.TicksPerMillisecond - (DateTime.Now - requestStart).Ticks;
 
-                log.LogWarning("TooManyRequestsException - retry success");
-            }
+            //Console.WriteLine($"waitTicks = {waitTicks}, executed = {(DateTime.Now - requestStart).Ticks}");
+
+            //if (waitTicks > 0)
+            //{
+            //    await Task.Delay(TimeSpan.FromTicks(waitTicks));
+            //}
+
+            // https://exchange-docs.crypto.com/spot/index.html#rate-limits
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            //}
+            //catch (TooManyRequestsException)
+            //{
+            //    log.LogWarning("TooManyRequestsException - retry start");
+
+            //    // TODO: play around with the delay
+            //    await Task.Delay(TimeSpan.FromSeconds(10));
+
+            //    await this.tradeHistoryService.ImportPeriodTradeHistory(input.end, input.start, input.azureUserId);
+
+            //    log.LogWarning("TooManyRequestsException - retry success");
+            //}
         }
 
         [FunctionName("ImportHistory_HttpStart")]

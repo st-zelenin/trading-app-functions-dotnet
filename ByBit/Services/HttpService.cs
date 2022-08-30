@@ -94,8 +94,6 @@ namespace ByBit.Services
 
             var paramsString = string.Join('&', sortedParams);
 
-            Console.WriteLine(paramsString);
-
             var encoding = new ASCIIEncoding();
 
             byte[] payload = encoding.GetBytes(paramsString);

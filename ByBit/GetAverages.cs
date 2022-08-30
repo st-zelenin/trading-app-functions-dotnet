@@ -46,7 +46,7 @@ namespace ByBit
                         acc.Add(curr.currency_pair, average);
                     }
 
-                    var side = curr.side == "BUY" ? average.buy : average.sell;
+                    var side = curr.side.ToUpper() == "BUY" ? average.buy : average.sell;
 
                     side.money = curr.total_money;
                     side.volume = curr.total_volume;

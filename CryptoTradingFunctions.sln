@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\Da
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gate", "Gate\Gate.csproj", "{EB52FBBB-A062-4E61-9234-A1C9622E77FE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exchanges", "Exchanges", "{EED5352E-E4C3-4A8D-B191-C8292D39D2FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User", "User\User.csproj", "{75EC1C94-2867-4B55-98F4-D898947AB200}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,11 +43,20 @@ Global
 		{EB52FBBB-A062-4E61-9234-A1C9622E77FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB52FBBB-A062-4E61-9234-A1C9622E77FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB52FBBB-A062-4E61-9234-A1C9622E77FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75EC1C94-2867-4B55-98F4-D898947AB200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75EC1C94-2867-4B55-98F4-D898947AB200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75EC1C94-2867-4B55-98F4-D898947AB200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75EC1C94-2867-4B55-98F4-D898947AB200}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A4F50E26-FB95-432D-989F-358D0B54C521}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{783E9FF0-D23D-4129-8224-689B9538B4C1} = {EED5352E-E4C3-4A8D-B191-C8292D39D2FE}
+		{3103D360-9AF3-47CC-8FCB-30926C64B6BD} = {EED5352E-E4C3-4A8D-B191-C8292D39D2FE}
+		{EB52FBBB-A062-4E61-9234-A1C9622E77FE} = {EED5352E-E4C3-4A8D-B191-C8292D39D2FE}
 	EndGlobalSection
 EndGlobal

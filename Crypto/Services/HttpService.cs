@@ -11,6 +11,7 @@ using Common.Interfaces;
 using Common.Models;
 using Crypto.Interfaces;
 using Crypto.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Crypto.Services
@@ -67,18 +68,15 @@ namespace Crypto.Services
     public class HttpService : BaseHttpService, IHttpService
     {
         private readonly ISecretsService secretsService;
+        private readonly ILogger<HttpService> log;
         private ExchangeApiKeysSecret apiKeys;
         private readonly HttpClient client;
 
-        public HttpService(ISecretsService secretsService)
+        public HttpService(ISecretsService secretsService, ILogger<HttpService> log, HttpClient client)
         {
             this.secretsService = secretsService;
-            this.client = new HttpClient()
-            {
-                BaseAddress = new Uri("https://api.crypto.com/v2/"),
-            };
-
-            this.client.DefaultRequestHeaders.Add("Accept", "application/json");
+            this.log = log;
+            this.client = client;
         }
 
         public Task<TRes> PostAsync<TRes>(string path)
@@ -106,13 +104,18 @@ namespace Crypto.Services
             //response.EnsureSuccessStatusCode();
             string content = await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine($"content: {content}");
-
             if (content.Equals("Too Many Requests"))
             {
                 throw new TooManyRequestsException();
             }
 
+            if (!response.IsSuccessStatusCode)
+            {
+                log.LogError($"request failed: {content}");
+                throw new HttpRequestException($"\"POST\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            }
+
+            log.LogInformation($"\"POST\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
 
             return JsonConvert.DeserializeObject<TRes>(content);
         }

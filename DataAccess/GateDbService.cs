@@ -19,20 +19,8 @@ namespace DataAccess
                 "SELECT SUM(StringToNumber(c.filled_total)) AS total_money, SUM(StringToNumber(c.amount)) AS total_volume, c.side, c.currency_pair FROM c WHERE c.status = 'closed' GROUP BY c.side, c.currency_pair";
 
             var container = await this.GetContainerAsync(containerId);
-            var result = new List<GateAverage>();
 
-            using (var feed = container.GetItemQueryIterator<GateAverage>(query))
-            {
-                while (feed.HasMoreResults)
-                {
-                    foreach (var average in await feed.ReadNextAsync())
-                    {
-                        result.Add(average);
-                    }
-                }
-            }
-
-            return result;
+            return await this.ExecuteReadQueryAsync<GateAverage>(query, container);
         }
 
         public Task<IEnumerable<GateOrder>> GetFilledOrdersAsync(string pair, string containerId)
@@ -65,20 +53,7 @@ namespace DataAccess
         {
             var container = await this.GetContainerAsync(containerId);
 
-            var result = new List<GateOrder>();
-
-            using (var feed = container.GetItemQueryIterator<GateOrder>(query))
-            {
-                while (feed.HasMoreResults)
-                {
-                    foreach (var order in await feed.ReadNextAsync())
-                    {
-                        result.Add(order);
-                    }
-                }
-            }
-
-            return result;
+            return await this.ExecuteReadQueryAsync<GateOrder>(query, container);
         }
 
         public async Task UpsertOrdersAsync(IEnumerable<GateOrder> orders, string containerId)
