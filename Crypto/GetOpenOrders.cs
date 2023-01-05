@@ -42,7 +42,7 @@ namespace Crypto
         {
             this.authService.ValidateUser(req);
 
-            var orders = new List<CryptoOrder>();
+            List<CryptoOrder> orders = new();
             var page = 0;
             var done = false;
 
@@ -58,14 +58,14 @@ namespace Crypto
 
 
             var body = orders.Aggregate(
-                new Dictionary<string, IList<CommonOrder>>(),
+                new Dictionary<string, List<CommonOrder>>(),
                 (acc, raw) =>
                 {
-                    IList<CommonOrder> instrument;
+                    List<CommonOrder> instrument;
 
                     if (!acc.TryGetValue(raw.instrument_name, out instrument))
                     {
-                        instrument = new List<CommonOrder>();
+                        instrument = new();
                         acc.Add(raw.instrument_name, instrument);
                     }
 

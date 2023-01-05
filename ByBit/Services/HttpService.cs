@@ -12,6 +12,7 @@ using ByBit.Models;
 using Common;
 using Common.Interfaces;
 using Common.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace ByBit.Services
@@ -19,18 +20,15 @@ namespace ByBit.Services
     public class HttpService : BaseHttpService, IHttpService
     {
         private readonly ISecretsService secretsService;
-        private ExchangeApiKeysSecret apiKeys;
+        private readonly ILogger<HttpService> log;
         private readonly HttpClient client;
+        private ExchangeApiKeysSecret apiKeys;
 
-        public HttpService(ISecretsService secretsService)
+        public HttpService(ISecretsService secretsService, ILogger<HttpService> log, HttpClient client)
         {
             this.secretsService = secretsService;
-            this.client = new HttpClient()
-            {
-                BaseAddress = new Uri("https://api.bybit.com"),
-            };
-
-            this.client.DefaultRequestHeaders.Add("Accept", "application/json");
+            this.log = log;
+            this.client = client;
         }
 
         public Task<TRes> GetAsync<TRes>(string path)
@@ -43,8 +41,15 @@ namespace ByBit.Services
             var paramsString = await this.GetSignedRequestParams(parameters);
 
             var response = await client.GetAsync($"{path}?{paramsString}");
-            //response.EnsureSuccessStatusCode();
             string content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                log.LogError($"request failed: {content}");
+                throw new HttpRequestException($"\"GET\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            }
+
+            log.LogInformation($"\"GET\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
 
             return JsonConvert.DeserializeObject<TRes>(content);
         }
@@ -54,8 +59,15 @@ namespace ByBit.Services
             var paramsString = await this.GetSignedRequestParams(parameters);
 
             var response = await client.DeleteAsync($"{path}?{paramsString}");
-            //response.EnsureSuccessStatusCode();
             string content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                log.LogError($"request failed: {content}");
+                throw new HttpRequestException($"\"DELETE\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            }
+
+            log.LogInformation($"\"DELETE\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
 
             return JsonConvert.DeserializeObject<TRes>(content);
         }
@@ -65,8 +77,15 @@ namespace ByBit.Services
             var paramsString = await this.GetSignedRequestParams(body);
 
             var response = await client.PostAsync($"{path}?{paramsString}", null);
-            //response.EnsureSuccessStatusCode();
             string content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                log.LogError($"request failed: {content}");
+                throw new HttpRequestException($"\"POST\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            }
+
+            log.LogInformation($"\"POST\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
 
             return JsonConvert.DeserializeObject<BaseResponse>(content);
         }

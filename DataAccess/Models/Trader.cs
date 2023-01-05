@@ -8,6 +8,7 @@
         public IEnumerable<string> crypto_pairs { get; set; }
         public IEnumerable<string> coinbase_pairs { get; set; }
         public IEnumerable<string> bybit_pairs { get; set; }
+        public IEnumerable<string> binance_pairs { get; set; }
     }
 }
 

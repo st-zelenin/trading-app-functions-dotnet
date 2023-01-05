@@ -1,26 +1,30 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
-using Common.Interfaces;
-using Common.Models;
-using DataAccess.Interfaces;
-using DataAccess.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Common.Interfaces;
+using Common.Models;
+using DataAccess.Interfaces;
+using System.Collections.Generic;
+using System.Linq;
+using DataAccess.Models;
 
-namespace ByBit;
+namespace Binance;
 
 public class GetRecentBuyAverages
 {
-    private readonly IByBitDbService bybitDbService;
+    private readonly IBinanceDbService binanceDbService;
     private readonly ITradingDbService tradingDbService;
     private readonly IAuthService authService;
 
-    public GetRecentBuyAverages(IByBitDbService bybitDbService, ITradingDbService tradingDbService, IAuthService authService)
+    public GetRecentBuyAverages(IBinanceDbService binanceDbService, ITradingDbService tradingDbService, IAuthService authService)
     {
-        this.bybitDbService = bybitDbService;
+        this.binanceDbService = binanceDbService;
         this.tradingDbService = tradingDbService;
         this.authService = authService;
     }
@@ -32,7 +36,7 @@ public class GetRecentBuyAverages
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
         var body = new Dictionary<string, AverageSide>();
-        foreach (var pair in user.bybit_pairs)
+        foreach (var pair in user.binance_pairs)
         {
             body.Add(pair, await this.AnalyzePairAsync(pair, azureUserId));
         }
@@ -42,12 +46,12 @@ public class GetRecentBuyAverages
 
     private async Task<AverageSide> AnalyzePairAsync(string pair, string continerId)
     {
-        var trades = await this.bybitDbService.GetFilledOrdersAsync(pair, continerId);
+        var trades = await this.binanceDbService.GetFilledOrdersAsync(pair, continerId);
 
-        var lastSell = trades.FirstOrDefault(trade => trade.side == ByBitOrderSide.Sell);
+        var lastSell = trades.FirstOrDefault(trade => trade.side == BinanceOrderSide.SELL);
 
         var recent = lastSell == null ? trades
-            : trades.Where(trade => trade.side == ByBitOrderSide.Buy && long.Parse(trade.updateTime) > long.Parse(lastSell.time));
+            : trades.Where(trade => trade.side == BinanceOrderSide.BUY && long.Parse(trade.updateTime) > long.Parse(lastSell.time));
 
         return recent.Aggregate(
             new AverageSide() { money = 0, price = 0, volume = 0 },

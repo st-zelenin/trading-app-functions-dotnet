@@ -60,7 +60,7 @@ namespace DataAccess
         {
             var container = await GetContainerAsync(containerId);
 
-            var tasks = new List<Task>();
+            List<Task> tasks = new();
             foreach (var order in orders)
             {
                 tasks.Add(container.UpsertItemAsync(order));

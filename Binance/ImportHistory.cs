@@ -1,12 +1,16 @@
-﻿using System.Threading.Tasks;
-using ByBit.Interfaces;
-using Common.Interfaces;
-using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Common.Interfaces;
+using Binance.Interfaces;
 
-namespace ByBit;
+namespace Binance;
 
 public class ImportHistory
 {
@@ -26,7 +30,7 @@ public class ImportHistory
 
     [FunctionName("ImportHistory")]
     public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
         var pair = this.httpService.GetRequiredQueryParam(req, "pair");
 

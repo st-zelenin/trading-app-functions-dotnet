@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Mime;
 using Common;
 using Common.Interfaces;
 using Crypto.Interfaces;
@@ -30,7 +31,7 @@ namespace Crypto
             builder.Services.AddHttpClient<IHttpService, HttpService>(client =>
             {
                 client.BaseAddress = new Uri("https://api.crypto.com/v2/");
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Add("Accept", MediaTypeNames.Application.Json);
             });
         }
     }

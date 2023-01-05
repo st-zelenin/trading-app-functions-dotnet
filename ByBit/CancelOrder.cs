@@ -43,7 +43,7 @@ namespace ByBit
 
             this.authService.ValidateUser(req);
 
-            var body = await this.httpService.DeleteAsync<BaseResponse, CancelOrderRequestParams>("/spot/v1/order",
+            var body = await this.httpService.DeleteAsync<BaseResponse, CancelOrderRequestParams>("/api/v3/order",
                 new CancelOrderRequestParams() { orderId = data.id });
 
             return new OkObjectResult(body);

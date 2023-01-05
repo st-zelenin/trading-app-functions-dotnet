@@ -1,12 +1,11 @@
 ﻿using System;
 using Common.Models;
 
-namespace Common.Interfaces
+namespace Common.Interfaces;
+
+public interface ISecretsService
 {
-    public interface ISecretsService
-    {
-        Task<string> GetSecretAsync(string key);
-        Task<T> GetSecretAsync<T>(string key) where T : new();
-    }
+    Task<string> GetSecretAsync(string key);
+    Task<T> GetSecretAsync<T>(string key) where T : new();
 }
 

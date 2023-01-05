@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -69,8 +70,8 @@ namespace Crypto.Services
     {
         private readonly ISecretsService secretsService;
         private readonly ILogger<HttpService> log;
-        private ExchangeApiKeysSecret apiKeys;
         private readonly HttpClient client;
+        private ExchangeApiKeysSecret apiKeys;
 
         public HttpService(ISecretsService secretsService, ILogger<HttpService> log, HttpClient client)
         {
@@ -100,7 +101,7 @@ namespace Crypto.Services
             string jsonString = JsonConvert.SerializeObject(signedBody);
 
 
-            var response = await client.PostAsync(path, new StringContent(jsonString, Encoding.UTF8, "application/json"));
+            var response = await client.PostAsync(path, new StringContent(jsonString, Encoding.UTF8, MediaTypeNames.Application.Json));
             //response.EnsureSuccessStatusCode();
             string content = await response.Content.ReadAsStringAsync();
 

@@ -40,6 +40,7 @@ namespace User
             user.crypto_pairs = updatedUser.crypto_pairs;
             user.coinbase_pairs = updatedUser.coinbase_pairs;
             user.bybit_pairs = updatedUser.bybit_pairs;
+            user.binance_pairs = updatedUser.binance_pairs;
 
             var body = await this.tradingDbService.UpdateUserAsync(user);
 

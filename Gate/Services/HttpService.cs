@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,8 +21,8 @@ namespace Gate.Services
     {
         private readonly ISecretsService secretsService;
         private readonly ILogger<HttpService> log;
-        private ExchangeApiKeysSecret apiKeys;
         private readonly HttpClient client;
+        private ExchangeApiKeysSecret apiKeys;
 
         const string PREFIX = "/api/v4";
 
@@ -79,7 +80,7 @@ namespace Gate.Services
 
             if (body != null)
             {
-                requestMessage.Content = new StringContent(serializedBody, Encoding.UTF8, "application/json");
+                requestMessage.Content = new StringContent(serializedBody, Encoding.UTF8, MediaTypeNames.Application.Json);
             }
 
             requestMessage.Headers.Add("KEY", this.apiKeys.apiKey);

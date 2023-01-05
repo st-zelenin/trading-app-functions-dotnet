@@ -28,7 +28,7 @@ namespace Crypto
         {
             var users = await this.tradingDbService.GetUsersAsync();
 
-            var tasks = new List<Task>();
+            List<Task> tasks = new();
             foreach (var user in users)
             {
                 tasks.Add(this.tradeHistoryService.UpdateRecentTradeHistory(user.id));

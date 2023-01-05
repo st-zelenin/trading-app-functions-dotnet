@@ -1,14 +1,14 @@
 ﻿using System;
-using ByBit.Interfaces;
 using DataAccess.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
+using Binance.Interfaces;
 using System.Linq;
 
-namespace ByBit;
+namespace Binance;
 
 public class UpdateRecentHistoryByTimer
 {
@@ -30,7 +30,7 @@ public class UpdateRecentHistoryByTimer
 
         var tasks = users.Aggregate(new List<Task>(), (acc, curr) =>
         {
-            foreach (var pair in curr.bybit_pairs)
+            foreach (var pair in curr.binance_pairs)
             {
                 acc.Add(this.tradeHistoryService.UpdateRecentTradeHistoryAsync(pair, curr.id));
             }
@@ -40,7 +40,7 @@ public class UpdateRecentHistoryByTimer
 
         await Task.WhenAll(tasks);
 
-        log.LogInformation($"ByBit: UpdateRecentHistoryByTimer executed at: {DateTime.Now}");
+        log.LogInformation($"Binance: UpdateRecentHistoryByTimer executed at: {DateTime.Now}");
     }
 }
 

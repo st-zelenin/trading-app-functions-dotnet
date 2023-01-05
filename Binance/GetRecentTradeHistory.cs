@@ -1,31 +1,35 @@
-﻿using System.Linq;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
-using ByBit.Interfaces;
-using Common.Interfaces;
-using DataAccess.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Common.Interfaces;
+using DataAccess.Interfaces;
+using Binance.Interfaces;
+using System.Linq;
 
-namespace ByBit;
+namespace Binance;
 
 public class GetRecentTradeHistory
 {
-    private readonly IByBitDbService bybitDbService;
+    private readonly IBinanceDbService binanceDbService;
     private readonly ITradingDbService tradingDbService;
     private readonly IAuthService authService;
     private readonly ITradeHistoryService tradeHistoryService;
     private readonly IHttpService httpService;
 
     public GetRecentTradeHistory(
-        IByBitDbService bybitDbService,
+        IBinanceDbService binanceDbService,
         ITradingDbService tradingDbService,
         IAuthService authService,
         ITradeHistoryService tradeHistoryService,
         IHttpService httpService)
     {
-        this.bybitDbService = bybitDbService;
+        this.binanceDbService = binanceDbService;
         this.tradingDbService = tradingDbService;
         this.authService = authService;
         this.tradeHistoryService = tradeHistoryService;
@@ -41,10 +45,10 @@ public class GetRecentTradeHistory
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var tasks = user.bybit_pairs.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p, azureUserId));
+        var tasks = user.binance_pairs.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p, azureUserId));
         await Task.WhenAll(tasks);
 
-        var orders = await this.bybitDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);
+        var orders = await this.binanceDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);
 
         var body = orders.Select(o => o.ToCommonOrder());
 

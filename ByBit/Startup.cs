@@ -1,4 +1,6 @@
-﻿using ByBit.Interfaces;
+﻿using System;
+using System.Net.Mime;
+using ByBit.Interfaces;
 using ByBit.Services;
 using Common;
 using Common.Interfaces;
@@ -20,8 +22,15 @@ namespace ByBit
             builder.Services.AddSingleton<ISecretsService, SecretsService>();
             builder.Services.AddSingleton<ITradingDbService, TradingDbService>();
             builder.Services.AddSingleton<IByBitDbService, ByBitDbService>();
-            builder.Services.AddSingleton<IHttpService, HttpService>();
             builder.Services.AddSingleton<ITradeHistoryService, TradeHistoryService>();
+
+            builder.Services.AddTransient<IHttpService, HttpService>();
+
+            builder.Services.AddHttpClient<IHttpService, HttpService>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.bybit.com");
+                client.DefaultRequestHeaders.Add("Accept", MediaTypeNames.Application.Json);
+            });
         }
     }
 }

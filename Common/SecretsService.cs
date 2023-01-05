@@ -12,6 +12,7 @@ namespace Common
         public static string CryptoApiKey => "CRYPTO-SPOT-TRADE";
         public static string ByBitApiKey => "BYBIT-SPOT";
         public static string GateApiKey => "GATE-SPOT-WRITE";
+        public static string BinanceApiKey => "BINANCE";
     }
 
     public class SecretsService : ISecretsService

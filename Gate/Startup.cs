@@ -6,6 +6,7 @@ using DataAccess;
 using DataAccess.Interfaces;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net.Mime;
 
 [assembly: FunctionsStartup(typeof(Gate.Startup))]
 
@@ -28,7 +29,7 @@ namespace Gate
 
             builder.Services.AddHttpClient<IHttpService, HttpService>(client =>
             {
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Add("Accept", MediaTypeNames.Application.Json);
             });
         }
     }
