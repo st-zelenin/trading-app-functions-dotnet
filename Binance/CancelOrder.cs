@@ -48,7 +48,7 @@ public class CancelOrder
 
         this.authService.ValidateUser(req);
 
-        var body = await this.httpService.DeleteSignedAsync<BinanceOrder, CancelOrderRequestParams>("/spot/v1/order",
+        var body = await this.httpService.DeleteSignedAsync<BinanceOrder, CancelOrderRequestParams>("/api/v3/order",
             new CancelOrderRequestParams() { orderId = long.Parse(data.id), symbol = data.pair });
 
         return new OkObjectResult(body);

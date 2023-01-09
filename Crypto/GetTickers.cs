@@ -42,7 +42,10 @@ namespace Crypto
                 new Dictionary<string, Common.Models.Ticker>(),
                 (acc, pair) =>
                 {
-                    var raw = response.result.data.First(x => x.i == pair);
+                    // for some reason crypto.com does not return tickers for '_USDC'
+                    // replacing with '_USDT'
+                    var usdtPair = pair.Replace("_USDC", "_USDT");
+                    var raw = response.result.data.First(x => x.i == usdtPair);
                     if (raw != null)
                     {
                         acc.Add(pair, raw.ToCommonTicker());
