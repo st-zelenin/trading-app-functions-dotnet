@@ -42,7 +42,7 @@ namespace ByBit
                 new Dictionary<string, Common.Models.Product>(),
                 (acc, pair) =>
                 {
-                    var raw = products.result.First(x => x.name == pair);
+                    var raw = products.result.FirstOrDefault(x => x.name == pair);
                     if (raw != null)
                     {
                         acc.Add(pair, raw.ToCommonProduct());

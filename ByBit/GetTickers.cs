@@ -37,7 +37,7 @@ namespace ByBit
                 new Dictionary<string, Common.Models.Ticker>(),
                 (acc, pair) =>
                 {
-                    var raw = response.result.First(x => x.symbol == pair);
+                    var raw = response.result.FirstOrDefault(x => x.symbol == pair);
                     if (raw != null)
                     {
                         acc.Add(pair, raw.ToCommonTicker());

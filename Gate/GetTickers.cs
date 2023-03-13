@@ -37,7 +37,7 @@ namespace Gate
                 new Dictionary<string, Common.Models.Ticker>(),
                 (acc, pair) =>
                 {
-                    var raw = tickers.First(x => x.currency_pair == pair);
+                    var raw = tickers.FirstOrDefault(x => x.currency_pair == pair);
                     if (raw != null)
                     {
                         acc.Add(pair, raw.ToCommonTicker());

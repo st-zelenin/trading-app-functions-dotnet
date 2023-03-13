@@ -39,7 +39,7 @@ namespace Crypto
                 new Dictionary<string, Common.Models.Product>(),
                 (acc, pair) =>
                 {
-                    var raw = instruments.First(x => x.id == pair);
+                    var raw = instruments.FirstOrDefault(x => x.id == pair);
                     if (raw != null)
                     {
                         acc.Add(pair, raw.ToCommonProduct());
