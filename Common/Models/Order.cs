@@ -13,6 +13,7 @@ namespace Common.Models
         public double amount { get; set; }
         public double price { get; set; }
         public OrderStatus status { get; set; }
+        public OrderType type { get; set; }
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -28,6 +29,13 @@ namespace Common.Models
         closed = 1,
         open,
         cancelled
+    }
+
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum OrderType
+    {
+        limit = 1,
+        market
     }
 }
 

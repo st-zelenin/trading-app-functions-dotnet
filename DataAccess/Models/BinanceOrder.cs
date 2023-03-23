@@ -1,6 +1,4 @@
-﻿using System;
-using Common.Models;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using CommonOrder = Common.Models.Order;
 using CommonOrderSide = Common.Models.OrderSide;
@@ -51,6 +49,7 @@ public class BinanceOrder
             amount = amount,
             price = double.Parse(this.price),
             status = this.ToCommonOrderStatus(),
+            type = this.type == BinanceOrderType.LIMIT ? Common.Models.OrderType.limit : Common.Models.OrderType.market
         };
     }
 

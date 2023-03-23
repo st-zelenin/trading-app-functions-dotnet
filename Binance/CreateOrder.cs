@@ -1,22 +1,17 @@
 ﻿using System;
-using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using Binance.Interfaces;
+using Binance.Models;
 using Common.Interfaces;
 using Common.Models;
 using DataAccess.Models;
-using System.Collections.Generic;
-using Binance.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
 using BinanceProduct = Binance.Models.Product;
 using CommonProduct = Common.Models.Product;
-using Binance.Models;
-using Microsoft.Azure.Cosmos;
-using System.Linq;
 
 namespace Binance;
 
@@ -42,20 +37,56 @@ public class CreateOrder
 
         this.authService.ValidateUser(req);
 
-        var side = order.side == CommonOrderSides.sell ? BinanceOrderSide.SELL : BinanceOrderSide.BUY;
-        var product = await this.GetProductAsync(order.currencyPair);
+        var newOrder = await this.GetNewOrder(order);
 
-        if (order.market == true)
+        if (newOrder.type == BinanceOrderType.MARKET)
         {
             var newMarketOrderResult =
-                await this.httpService.PostSignedAsync<BinanceOrder, NewMarketOrder>("/api/v3/order", this.ToNewMarketOrder(order, side));
+                await this.httpService.PostSignedAsync<BinanceOrder, NewMarketOrder>("/api/v3/order", newOrder as NewMarketOrder);
             return new OkObjectResult(newMarketOrderResult);
         }
 
         var newLimitOrderResult =
-            await this.httpService.PostSignedAsync<BinanceOrder, NewLimitOrder>("/api/v3/order", this.ToNewLimitOrder(order, side, product));
+            await this.httpService.PostSignedAsync<BinanceOrder, NewLimitOrder>("/api/v3/order", newOrder as NewLimitOrder);
         return new OkObjectResult(newLimitOrderResult);
     }
+
+    private async Task<BaseNewOrder> GetNewOrder(NewOrder order)
+    {
+        var product = await this.GetProductAsync(order.currencyPair);
+
+        if (order.market == true)
+        {
+            return this.ToNewMarketOrder(order);
+        }
+
+        decimal price;
+        if (!decimal.TryParse(order.price, out price))
+        {
+            throw new ArgumentException($"unexpected price value: {order.price}");
+        }
+
+        var ticker = await this.httpService.GetAsync<Models.Ticker, SymbolParams>("/api/v3/ticker/24hr", new SymbolParams { symbol = order.currencyPair });
+
+        decimal tickerPrice;
+        if (ticker == null || !decimal.TryParse(ticker.lastPrice, out tickerPrice))
+        {
+            return this.ToNewLimitOrder(order, price, product);
+        }
+
+        if (order.side == CommonOrderSides.buy && price > tickerPrice)
+        {
+            return this.ToNewMarketOrder(order);
+        }
+
+        if (order.side == CommonOrderSides.sell && price < tickerPrice)
+        {
+            return this.ToNewMarketOrder(order);
+        }
+
+        return this.ToNewLimitOrder(order, price, product);
+    }
+
 
     private async Task<CommonProduct> GetProductAsync(string name)
     {
@@ -65,12 +96,12 @@ public class CreateOrder
         }
 
         var exchangeInfo =
-            await this.httpService.GetAsync<ExchangeInfo<BinanceProduct>, GetProductParams>("/api/v3/exchangeInfo", new GetProductParams { symbol = name });
+            await this.httpService.GetAsync<ExchangeInfo<BinanceProduct>, SymbolParams>("/api/v3/exchangeInfo", new SymbolParams { symbol = name });
 
         return exchangeInfo.symbols.First().ToCommonProduct();
     }
 
-    private NewMarketOrder ToNewMarketOrder(NewOrder order, BinanceOrderSide side)
+    private NewMarketOrder ToNewMarketOrder(NewOrder order)
     {
         decimal amount;
         if (!decimal.TryParse(order.amount, out amount) || amount <= 0)
@@ -81,19 +112,13 @@ public class CreateOrder
         return new NewMarketOrder()
         {
             symbol = order.currencyPair,
-            side = side,
+            side = order.side == CommonOrderSides.sell ? BinanceOrderSide.SELL : BinanceOrderSide.BUY,
             quoteOrderQty = amount
         };
     }
 
-    private NewLimitOrder ToNewLimitOrder(NewOrder order, BinanceOrderSide side, CommonProduct product)
+    private NewLimitOrder ToNewLimitOrder(NewOrder order, decimal price, CommonProduct product)
     {
-        decimal price;
-        if (!decimal.TryParse(order.price, out price) || price <= 0)
-        {
-            throw new ArgumentException($"unexpected price value: {order.price}");
-        }
-
         decimal amount;
         if (!decimal.TryParse(order.amount, out amount) || amount <= 0)
         {
@@ -103,7 +128,7 @@ public class CreateOrder
         return new NewLimitOrder()
         {
             symbol = order.currencyPair,
-            side = side,
+            side = order.side == CommonOrderSides.sell ? BinanceOrderSide.SELL : BinanceOrderSide.BUY,
             price = this.RoundToSmallestUnit(price, (decimal)product.pricePrecision),
             quantity = this.RoundToSmallestUnit(amount, (decimal)product.minQuantity)
         };
@@ -116,7 +141,7 @@ public class CreateOrder
     }
 }
 
-internal class GetProductParams
+internal class SymbolParams
 {
     public string symbol { get; set; }
 }
