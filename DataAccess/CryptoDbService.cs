@@ -1,11 +1,13 @@
-﻿using Common.Interfaces;
+﻿using System.ComponentModel;
+using Common.Interfaces;
+using Common.Models;
 using DataAccess.Interfaces;
 using DataAccess.Models;
 using Microsoft.Azure.Cosmos;
 
 namespace DataAccess
 {
-    public class CryptoDbService: BaseDbService, ICryptoDbService
+    public class CryptoDbService : BaseDbService, ICryptoDbService
     {
         public CryptoDbService(ISecretsService secretsService, IEnvironmentVariableService environmentVariableService)
             : base("crypto", secretsService, environmentVariableService)
@@ -59,7 +61,8 @@ namespace DataAccess
         public async Task UpsertOrdersAsync(IEnumerable<CryptoOrder> orders, string containerId)
         {
             var database = await this.GetDatabaseAsync();
-            var container = await database.CreateContainerIfNotExistsAsync(new ContainerProperties() {
+            var container = await database.CreateContainerIfNotExistsAsync(new ContainerProperties()
+            {
                 Id = containerId,
                 PartitionKeyPath = "/instrument_name"
             });
@@ -71,6 +74,31 @@ namespace DataAccess
             }
 
             await Task.WhenAll(tasks);
+        }
+
+        public async Task DoSomeTechService(string containerId)
+        {
+            var database = await this.GetDatabaseAsync();
+            var container = database.GetContainer(containerId);
+
+            var query = new QueryDefinition("select * from c where endswith(c.instrument_name, \"USDC\")");
+            var results = await this.ExecuteReadQueryAsync<CryptoOrder>(query, container);
+
+            //foreach (var order in results)
+            //{
+            //    await container.DeleteItemAsync<CryptoOrder>(order.id, new PartitionKey(order.instrument_name));
+            //    var orig_instrument_name = order.instrument_name;
+            //    order.instrument_name = order.instrument_name.Replace("USDC", "USD");
+            //    try
+            //    {
+            //        await container.UpsertItemAsync(partitionKey: new PartitionKey(order.instrument_name), item: order);
+            //    }
+            //    catch
+            //    {
+            //        order.instrument_name = orig_instrument_name;
+            //        await container.UpsertItemAsync(partitionKey: new PartitionKey(order.instrument_name), item: order);
+            //    }
+            //}
         }
     }
 }

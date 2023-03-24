@@ -10,41 +10,40 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using CommonBalance = Common.Models.Balance;
 
-namespace Crypto
+namespace Crypto;
+
+internal class BalancesResponseResult
 {
-    internal class BalancesResponseResult
+    public IEnumerable<Balance> accounts { get; set; }
+}
+
+public class GetBalances
+{
+    private readonly IAuthService authService;
+    private readonly IHttpService httpService;
+
+    public GetBalances(IAuthService authService, IHttpService httpService)
     {
-        public IEnumerable<Balance> accounts { get; set; }
+        this.authService = authService;
+        this.httpService = httpService;
     }
 
-    public class GetBalances
+    [FunctionName("GetBalances")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
-        private readonly IAuthService authService;
-        private readonly IHttpService httpService;
+        this.authService.ValidateUser(req);
 
-        public GetBalances(IAuthService authService, IHttpService httpService)
-        {
-            this.authService = authService;
-            this.httpService = httpService;
-        }
+        var response = await this.httpService.PostAsync<ResponseWithResult<BalancesResponseResult>>("private/get-account-summary");
 
-        [FunctionName("GetBalances")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-        {
-            this.authService.ValidateUser(req);
+        var body = response.result.accounts.Aggregate(
+            new Dictionary<string, CommonBalance>(),
+            (acc, raw) =>
+            {
+                acc.Add(raw.currency, raw.ToCommonBalance());
+                return acc;
+            });
 
-            var response = await this.httpService.PostAsync<ResponseWithResult<BalancesResponseResult>>("private/get-account-summary");
-
-            var body = response.result.accounts.Aggregate(
-                new Dictionary<string, CommonBalance>(),
-                (acc, raw) =>
-                {
-                    acc.Add(raw.currency, raw.ToCommonBalance());
-                    return acc;
-                });
-
-            return new OkObjectResult(body);
-        }
+        return new OkObjectResult(body);
     }
 }
 

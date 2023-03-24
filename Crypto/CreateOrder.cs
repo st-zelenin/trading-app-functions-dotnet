@@ -36,7 +36,12 @@ namespace Crypto
             this.authService.ValidateUser(req);
 
             var side = order.side == CommonOrderSides.sell ? CryptoOrderSide.SELL : CryptoOrderSide.BUY;
+
             var instrument = await this.GetInstrument(order.currencyPair);
+            if (instrument == null)
+            {
+                throw new Exception($"failed to find instrument: {order.currencyPair}");
+            }
 
             if (order.market == true)
             {
@@ -57,8 +62,7 @@ namespace Crypto
             }
 
             var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");
-
-            return instruments.result.instruments.First((i) => i.instrument_name == name);
+            return instruments.result.instruments.FirstOrDefault((i) => i.instrument_name == name);
         }
 
         private NewMarketOrder ToNewMarketOrder(NewOrder order, CryptoOrderSide side, Instrument instrument)

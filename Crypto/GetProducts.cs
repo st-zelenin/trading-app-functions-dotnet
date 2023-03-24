@@ -44,10 +44,7 @@ namespace Crypto
                 new Dictionary<string, Common.Models.Product>(),
                 (acc, pair) =>
                 {
-                    // for some reason crypto.com does not return products for '_USDC'
-                    // replacing with '_USDT'
-                    var usdtPair = pair.Replace("_USDC", "_USDT");
-                    var raw = instruments.result.instruments.FirstOrDefault(x => x.instrument_name == usdtPair);
+                    var raw = instruments.result.instruments.FirstOrDefault(x => x.instrument_name == pair);
                     if (raw != null)
                     {
                         acc.Add(pair, raw.ToCommonProduct());
