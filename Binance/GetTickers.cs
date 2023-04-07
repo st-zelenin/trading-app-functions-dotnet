@@ -38,7 +38,7 @@ public class GetTickers
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var tickers = await this.httpService.GetAsync<IEnumerable<Ticker>, GetTickersParams>("/api/v3/ticker/24hr", new GetTickersParams { symbols = user.binance_pairs });
+        var tickers = await this.httpService.GetAsync<IEnumerable<Ticker>, GetTickersParams>("/api/v3/ticker/24hr", new GetTickersParams { symbols = user.binance.Select(p => p.symbol) });
 
         var body = tickers.Aggregate(
             new Dictionary<string, Common.Models.Ticker>(),

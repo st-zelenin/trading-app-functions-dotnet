@@ -41,7 +41,7 @@ public class GetRecentTradeHistory
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var tasks = user.bybit_pairs.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p, azureUserId));
+        var tasks = user.bybit.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p.symbol, azureUserId));
         await Task.WhenAll(tasks);
 
         var orders = await this.bybitDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);

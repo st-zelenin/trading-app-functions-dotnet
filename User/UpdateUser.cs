@@ -36,11 +36,11 @@ namespace User
 
             var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-            user.pairs = updatedUser.pairs;
-            user.crypto_pairs = updatedUser.crypto_pairs;
-            user.coinbase_pairs = updatedUser.coinbase_pairs;
-            user.bybit_pairs = updatedUser.bybit_pairs;
-            user.binance_pairs = updatedUser.binance_pairs;
+            user.gate = updatedUser.gate;
+            user.crypto = updatedUser.crypto;
+            user.coinbase = updatedUser.coinbase;
+            user.bybit = updatedUser.bybit;
+            user.binance = updatedUser.binance;
 
             var body = await this.tradingDbService.UpdateUserAsync(user);
 

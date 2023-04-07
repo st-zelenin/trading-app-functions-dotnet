@@ -13,112 +13,139 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using ByBitProduct = ByBit.Models.Product;
 
-namespace ByBit
+namespace ByBit;
+
+public class CreateOrder
 {
-    public class CreateOrder
+    private readonly IHttpService httpService;
+    private readonly IAuthService authService;
+
+    public CreateOrder(IHttpService httpService, IAuthService authService)
     {
-        private readonly IHttpService httpService;
-        private readonly IAuthService authService;
+        this.httpService = httpService;
+        this.authService = authService;
+    }
 
-        public CreateOrder(IHttpService httpService, IAuthService authService)
+    [FunctionName("CreateOrder")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
+    {
+        var order = await this.httpService.GetRequestBody<NewOrder>(req);
+        if (order == null)
         {
-            this.httpService = httpService;
-            this.authService = authService;
+            throw new ArgumentException("\"order\" is missing");
         }
 
-        [FunctionName("CreateOrder")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
+        this.authService.ValidateUser(req);
+
+        var product = await this.GetProductAsync(order.currencyPair);
+        var newOrder = await this.GetNewOrder(order, product);
+
+        if (newOrder.type == ByBitOrderType.MARKET)
         {
-            var order = await this.httpService.GetRequestBody<NewOrder>(req);
-            if (order == null)
-            {
-                throw new ArgumentException("\"order\" is missing");
-            }
-
-            this.authService.ValidateUser(req);
-
-            var side = order.side == CommonOrderSides.sell ? ByBitOrderSide.Sell : ByBitOrderSide.Buy;
-            var product = await this.GetProductAsync(order.currencyPair);
-
-            if (order.market == true)
-            {
-                var newMarketOrderResult =
-                    await this.httpService.PostAsync("/spot/v1/order", this.ToNewMarketOrder(order, side));
-                return new OkObjectResult(newMarketOrderResult);
-            }
-
-            var newLimitOrderResult = await this.httpService.PostAsync("/spot/v1/order", this.ToNewLimitOrder(order, side, product));
-            return new OkObjectResult(newLimitOrderResult);
+            var newMarketOrderResult =
+                await this.httpService.PostAsync("/spot/v1/order", (NewMarketOrder)newOrder);
+            return new OkObjectResult(newMarketOrderResult);
         }
 
-        private async Task<ByBitProduct> GetProductAsync(string name)
+        var newLimitOrderResult = await this.httpService.PostAsync("/spot/v1/order", (NewLimitOrder)newOrder);
+        return new OkObjectResult(newLimitOrderResult);
+    }
+
+    private async Task<ByBitProduct> GetProductAsync(string symbol)
+    {
+        if (string.IsNullOrEmpty(symbol))
         {
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentException("missing \"currencyPair\"");
-            }
-
-            var products = await this.httpService.GetAsync<ResponseWithResult<IEnumerable<ByBitProduct>>>("/spot/v1/symbols");
-
-            return products.result.First((i) => i.name == name);
+            throw new ArgumentException("missing \"currencyPair\"");
         }
 
-        private NewMarketOrder ToNewMarketOrder(NewOrder order, ByBitOrderSide side)
-        {
-            double amount;
-            if (!double.TryParse(order.amount, out amount) || amount <= 0)
-            {
-                throw new ArgumentException($"unexpected amount value: {amount}");
-            }
+        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Models.Product>, SpotSymbolParams>("/v5/market/instruments-info", new SpotSymbolParams { symbol = symbol });
 
-            return new NewMarketOrder()
-            {
-                symbol = order.currencyPair,
-                side = side,
-                qty = amount
-            };
+        return response.result.list.First();
+    }
+
+    private async Task<BaseNewOrder> GetNewOrder(NewOrder order, ByBitProduct product)
+    {
+        if (order.market == true)
+        {
+            return this.ToNewMarketOrder(order);
         }
 
-        private NewLimitOrder ToNewLimitOrder(NewOrder order, ByBitOrderSide side, ByBitProduct product)
+        double price;
+        if (!double.TryParse(order.price, out price))
         {
-            double price;
-            if (!double.TryParse(order.price, out price) || price <= 0)
-            {
-                throw new ArgumentException($"unexpected price value: {order.price}");
-            }
-
-            double amount;
-            if (!double.TryParse(order.amount, out amount) || amount <= 0)
-            {
-                throw new ArgumentException($"unexpected amount value: {order.amount}");
-            }
-
-            double minPricePrecision;
-            if (!double.TryParse(product.minPricePrecision, out minPricePrecision))
-            {
-                throw new ArgumentException($"unexpected minPricePrecision value: {product.minPricePrecision}");
-            }
-
-            double basePrecision;
-            if (!double.TryParse(product.basePrecision, out basePrecision))
-            {
-                throw new ArgumentException($"unexpected basePrecision value: {product.basePrecision}");
-            }
-
-            return new NewLimitOrder()
-            {
-                symbol = order.currencyPair,
-                side = side,
-                price = this.RoundToSmallestUnit(price, minPricePrecision),
-                qty = this.RoundToSmallestUnit(amount, basePrecision)
-            };
+            throw new ArgumentException($"unexpected price value: {order.price}");
         }
 
-        private double RoundToSmallestUnit(double num, double smallestUnit)
+        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Models.Ticker>, SpotSymbolParams>("/v5/market/tickers", new SpotSymbolParams { symbol = order.currencyPair });
+
+        double tickerPrice;
+        if (response.result.list == null || response.result.list.Count() == 0 || !double.TryParse(response.result.list.First().lastPrice, out tickerPrice))
         {
-            var x = Math.Round(1 / smallestUnit); // TODO: TEST!!! "0.00001"
-            return Math.Round(num * x) / x;
+            return this.ToNewLimitOrder(order, product, price);
         }
+
+        if (order.side == CommonOrderSides.buy && price > tickerPrice)
+        {
+            return this.ToNewMarketOrder(order);
+        }
+
+        if (order.side == CommonOrderSides.sell && price < tickerPrice)
+        {
+            return this.ToNewMarketOrder(order);
+        }
+
+        return this.ToNewLimitOrder(order, product, price);
+    }
+
+
+    private NewMarketOrder ToNewMarketOrder(NewOrder order)
+    {
+        double amount;
+        if (!double.TryParse(order.amount, out amount) || amount <= 0)
+        {
+            throw new ArgumentException($"unexpected amount value: {amount}");
+        }
+
+        return new NewMarketOrder()
+        {
+            symbol = order.currencyPair,
+            side = order.side == CommonOrderSides.sell ? ByBitOrderSide.Sell : ByBitOrderSide.Buy,
+            qty = amount
+        };
+    }
+
+    private NewLimitOrder ToNewLimitOrder(NewOrder order, ByBitProduct product, double price)
+    {
+        double amount;
+        if (!double.TryParse(order.amount, out amount) || amount <= 0)
+        {
+            throw new ArgumentException($"unexpected amount value: {order.amount}");
+        }
+
+        double minPricePrecision;
+        if (!double.TryParse(product.priceFilter.tickSize, out minPricePrecision))
+        {
+            throw new ArgumentException($"unexpected minPricePrecision value: {product.priceFilter.tickSize}");
+        }
+
+        double basePrecision;
+        if (!double.TryParse(product.lotSizeFilter.basePrecision, out basePrecision))
+        {
+            throw new ArgumentException($"unexpected basePrecision value: {product.lotSizeFilter.basePrecision}");
+        }
+
+        return new NewLimitOrder()
+        {
+            symbol = order.currencyPair,
+            side = order.side == CommonOrderSides.sell ? ByBitOrderSide.Sell : ByBitOrderSide.Buy,
+            price = this.RoundToSmallestUnit(price, minPricePrecision),
+            qty = this.RoundToSmallestUnit(amount, basePrecision)
+        };
+    }
+
+    private double RoundToSmallestUnit(double num, double smallestUnit)
+    {
+        var x = Math.Round(1 / smallestUnit); // TODO: TEST!!! "0.00001"
+        return Math.Round(num * x) / x;
     }
 }
-

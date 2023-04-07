@@ -32,9 +32,9 @@ namespace Crypto
             var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
             var body = new Dictionary<string, AverageSide>();
-            foreach (var pair in user.crypto_pairs)
+            foreach (var pair in user.crypto)
             {
-                body.Add(pair, await this.AnalyzePairAsync(pair, azureUserId));
+                body.Add(pair.symbol, await this.AnalyzePairAsync(pair.symbol, azureUserId));
             }
 
             return new OkObjectResult(body);

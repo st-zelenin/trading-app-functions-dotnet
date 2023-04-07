@@ -10,49 +10,48 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 
-namespace ByBit
+namespace ByBit;
+
+internal class IHistoryRequestParams
 {
-    internal class IHistoryRequestParams
+    public string symbol { get; set; }
+}
+
+public class GetProducts
+{
+    private readonly ITradingDbService tradingDbService;
+    private readonly IHttpService httpService;
+    private readonly IAuthService authService;
+
+    public GetProducts(ITradingDbService tradingDbService, IHttpService httpService, IAuthService authService)
     {
-        public string symbol { get; set; }
+        this.tradingDbService = tradingDbService;
+        this.httpService = httpService;
+        this.authService = authService;
     }
 
-    public class GetProducts
+    [FunctionName("GetProducts")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
-        private readonly ITradingDbService tradingDbService;
-        private readonly IHttpService httpService;
-        private readonly IAuthService authService;
+        var azureUserId = this.authService.GetUserId(req);
+        var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        public GetProducts(ITradingDbService tradingDbService, IHttpService httpService, IAuthService authService)
-        {
-            this.tradingDbService = tradingDbService;
-            this.httpService = httpService;
-            this.authService = authService;
-        }
+        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Product>, SingleSpotCategoryParams>("/v5/market/instruments-info", new SingleSpotCategoryParams { });
 
-        [FunctionName("GetProducts")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-        {
-            var azureUserId = this.authService.GetUserId(req);
-            var user = await this.tradingDbService.GetUserAsync(azureUserId);
-
-            var products = await this.httpService.GetAsync<ResponseWithResult<IEnumerable<Product>>>("/spot/v1/symbols");
-
-            var body = user.bybit_pairs.Aggregate(
-                new Dictionary<string, Common.Models.Product>(),
-                (acc, pair) =>
+        var body = user.bybit.Aggregate(
+            new Dictionary<string, Common.Models.Product>(),
+            (acc, pair) =>
+            {
+                var raw = response.result.list.FirstOrDefault(x => x.symbol == pair.symbol);
+                if (raw != null)
                 {
-                    var raw = products.result.FirstOrDefault(x => x.name == pair);
-                    if (raw != null)
-                    {
-                        acc.Add(pair, raw.ToCommonProduct());
-                    }
+                    acc.Add(pair.symbol, raw.ToCommonProduct());
+                }
 
-                    return acc;
-                });
+                return acc;
+            });
 
-            return new OkObjectResult(body);
-        }
+        return new OkObjectResult(body);
     }
 }
 

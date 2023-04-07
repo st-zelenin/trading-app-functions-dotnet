@@ -1,14 +1,18 @@
-﻿namespace DataAccess.Models
+﻿namespace DataAccess.Models;
+
+public class Trader
 {
-    public class Trader
-    {
-        public string id { get; set; }
-        public string name { get; set; }
-        public IEnumerable<string> pairs { get; set; }
-        public IEnumerable<string> crypto_pairs { get; set; }
-        public IEnumerable<string> coinbase_pairs { get; set; }
-        public IEnumerable<string> bybit_pairs { get; set; }
-        public IEnumerable<string> binance_pairs { get; set; }
-    }
+    public string id { get; set; }
+    public string name { get; set; }
+    public IList<CryptoPair> gate { get; set; }
+    public IList<CryptoPair> crypto{ get; set; }
+    public IList<CryptoPair> coinbase{ get; set; }
+    public IList<CryptoPair> bybit { get; set; }
+    public IList<CryptoPair> binance { get; set; }
 }
 
+public class CryptoPair
+{
+    public string symbol { get; set; }
+    public bool isArchived { get; set; }
+}

@@ -5,43 +5,41 @@ using System.Threading.Tasks;
 using DataAccess.Interfaces;
 using Gate.Interfaces;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 
-namespace Gate
+namespace Gate;
+
+public class UpdateRecentHistoryByTimer
 {
-    public class UpdateRecentHistoryByTimer
+    private readonly ITradingDbService tradingDbService;
+    private readonly ITradeHistoryService tradeHistoryService;
+
+    public UpdateRecentHistoryByTimer(
+        ITradingDbService tradingDbService,
+        ITradeHistoryService tradeHistoryService)
     {
-        private readonly ITradingDbService tradingDbService;
-        private readonly ITradeHistoryService tradeHistoryService;
+        this.tradingDbService = tradingDbService;
+        this.tradeHistoryService = tradeHistoryService;
+    }
 
-        public UpdateRecentHistoryByTimer(
-            ITradingDbService tradingDbService,
-            ITradeHistoryService tradeHistoryService)
+    [FunctionName("UpdateRecentHistoryByTimer")]
+    public async Task Run([TimerTrigger("0 */5 * * * *")] TimerInfo myTimer, ILogger log)
+    {
+        var users = await this.tradingDbService.GetUsersAsync();
+
+        var tasks = users.Aggregate(new List<Task>(), (acc, curr) =>
         {
-            this.tradingDbService = tradingDbService;
-            this.tradeHistoryService = tradeHistoryService;
-        }
-
-        [FunctionName("UpdateRecentHistoryByTimer")]
-        public async Task Run([TimerTrigger("0 */5 * * * *")]TimerInfo myTimer, ILogger log)
-        {
-            var users = await this.tradingDbService.GetUsersAsync();
-
-            var tasks = users.Aggregate(new List<Task>(), (acc, curr) =>
+            foreach (var pair in curr.gate)
             {
-                foreach(var pair in curr.pairs)
-                {
-                    acc.Add(this.tradeHistoryService.UpdateRecentTradeHistory(pair, curr.id));
-                }
+                acc.Add(this.tradeHistoryService.UpdateRecentTradeHistory(pair.symbol, curr.id));
+            }
 
-                return acc;
-            });
+            return acc;
+        });
 
-            await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks);
 
-            log.LogInformation($"Gate: UpdateRecentHistoryByTimer executed at: {DateTime.Now}");
-        }
+        log.LogInformation($"Gate: UpdateRecentHistoryByTimer executed at: {DateTime.Now}");
     }
 }
 

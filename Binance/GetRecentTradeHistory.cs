@@ -45,7 +45,7 @@ public class GetRecentTradeHistory
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var tasks = user.binance_pairs.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p, azureUserId));
+        var tasks = user.binance.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p.symbol, azureUserId));
         await Task.WhenAll(tasks);
 
         var orders = await this.binanceDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);

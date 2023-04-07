@@ -35,7 +35,7 @@ public class GetProducts
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var exchangeInfo = await this.httpService.GetAsync<ExchangeInfo<Product>, GetProductsParams>("/api/v3/exchangeInfo", new GetProductsParams { symbols = user.binance_pairs });
+        var exchangeInfo = await this.httpService.GetAsync<ExchangeInfo<Product>, GetProductsParams>("/api/v3/exchangeInfo", new GetProductsParams { symbols = user.binance.Select(p => p.symbol) });
 
         var body = exchangeInfo.symbols.Aggregate(
             new Dictionary<string, Common.Models.Product>(),

@@ -10,50 +10,50 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 
-namespace Crypto
+namespace Crypto;
+
+internal class InstrumentsResponseResult
 {
-    internal class InstrumentsResponseResult
+    public IEnumerable<Instrument> instruments { get; set; }
+}
+
+public class GetProducts
+{
+    private readonly ITradingDbService tradingDbService;
+    private readonly IHttpService httpService;
+    private readonly IAuthService authService;
+
+    public GetProducts(ITradingDbService tradingDbService, IHttpService httpService, IAuthService authService)
     {
-        public IEnumerable<Instrument> instruments { get; set; }
+        this.tradingDbService = tradingDbService;
+        this.httpService = httpService;
+        this.authService = authService;
     }
 
-    public class GetProducts
+    [FunctionName("GetProducts")]
+    public async Task<IActionResult> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req
+    )
     {
-        private readonly ITradingDbService tradingDbService;
-        private readonly IHttpService httpService;
-        private readonly IAuthService authService;
+        var azureUserId = this.authService.GetUserId(req);
+        var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        public GetProducts(ITradingDbService tradingDbService, IHttpService httpService, IAuthService authService)
-        {
-            this.tradingDbService = tradingDbService;
-            this.httpService = httpService;
-            this.authService = authService;
-        }
+        var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");
 
-        [FunctionName("GetProducts")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req
-        )
-        {
-            var azureUserId = this.authService.GetUserId(req);
-            var user = await this.tradingDbService.GetUserAsync(azureUserId);
-
-            var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");
-
-            var body = user.crypto_pairs.Aggregate(
-                new Dictionary<string, Common.Models.Product>(),
-                (acc, pair) =>
+        var body = user.crypto.Aggregate(
+            new Dictionary<string, Common.Models.Product>(),
+            (acc, pair) =>
+            {
+                var raw = instruments.result.instruments.FirstOrDefault(x => x.instrument_name == pair.symbol);
+                if (raw != null)
                 {
-                    var raw = instruments.result.instruments.FirstOrDefault(x => x.instrument_name == pair);
-                    if (raw != null)
-                    {
-                        acc.Add(pair, raw.ToCommonProduct());
-                    }
+                    acc.Add(pair.symbol, raw.ToCommonProduct());
+                }
 
-                    return acc;
-                });
+                return acc;
+            });
 
-            return new OkObjectResult(body);
-        }
+        return new OkObjectResult(body);
     }
 }
+

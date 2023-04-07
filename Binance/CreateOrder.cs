@@ -42,12 +42,12 @@ public class CreateOrder
         if (newOrder.type == BinanceOrderType.MARKET)
         {
             var newMarketOrderResult =
-                await this.httpService.PostSignedAsync<BinanceOrder, NewMarketOrder>("/api/v3/order", newOrder as NewMarketOrder);
+                await this.httpService.PostSignedAsync<BinanceOrder, NewMarketOrder>("/api/v3/order", (NewMarketOrder)newOrder);
             return new OkObjectResult(newMarketOrderResult);
         }
 
         var newLimitOrderResult =
-            await this.httpService.PostSignedAsync<BinanceOrder, NewLimitOrder>("/api/v3/order", newOrder as NewLimitOrder);
+            await this.httpService.PostSignedAsync<BinanceOrder, NewLimitOrder>("/api/v3/order", (NewLimitOrder)newOrder);
         return new OkObjectResult(newLimitOrderResult);
     }
 

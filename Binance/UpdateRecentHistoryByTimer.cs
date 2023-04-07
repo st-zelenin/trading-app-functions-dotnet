@@ -3,7 +3,6 @@ using DataAccess.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Binance.Interfaces;
 using System.Linq;
@@ -30,9 +29,9 @@ public class UpdateRecentHistoryByTimer
 
         var tasks = users.Aggregate(new List<Task>(), (acc, curr) =>
         {
-            foreach (var pair in curr.binance_pairs)
+            foreach (var pair in curr.binance)
             {
-                acc.Add(this.tradeHistoryService.UpdateRecentTradeHistoryAsync(pair, curr.id));
+                acc.Add(this.tradeHistoryService.UpdateRecentTradeHistoryAsync(pair.symbol, curr.id));
             }
 
             return acc;

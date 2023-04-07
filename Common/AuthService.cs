@@ -1,5 +1,4 @@
-﻿using System;
-using Common.Interfaces;
+﻿using Common.Interfaces;
 using Common.Models;
 using JWT;
 using JWT.Algorithms;
@@ -21,7 +20,7 @@ namespace Common
 
             return new AzureUser()
             {
-                oid = oid,
+                oid = oid + "11",
                 name = name
             };
         }

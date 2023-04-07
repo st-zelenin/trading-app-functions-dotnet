@@ -35,14 +35,14 @@ namespace Crypto
 
             var instruments = await this.httpService.GetAsync<IEnumerable<Product>>("/spot/currency_pairs");
 
-            var body = user.pairs.Aggregate(
+            var body = user.gate.Aggregate(
                 new Dictionary<string, Common.Models.Product>(),
                 (acc, pair) =>
                 {
-                    var raw = instruments.FirstOrDefault(x => x.id == pair);
+                    var raw = instruments.FirstOrDefault(x => x.id == pair.symbol);
                     if (raw != null)
                     {
-                        acc.Add(pair, raw.ToCommonProduct());
+                        acc.Add(pair.symbol, raw.ToCommonProduct());
                     }
 
                     return acc;
