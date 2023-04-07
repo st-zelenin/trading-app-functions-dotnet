@@ -94,6 +94,70 @@ public class TradingDbService : BaseDbService, ITradingDbService
         return this.AddRemovePairAsync(azureUserId, exchangeSymbol, false);
     }
 
+    public async Task<Trader> OrderPairsAsync(string azureUserId, OrderedSymbols orderedSymbols)
+    {
+        var user = await this.GetUserAsync(azureUserId);
+        if (user is null)
+        {
+            throw new Exception($"failed to get user with id: {azureUserId}");
+        }
+
+        var pairs = GetExchangePairs(orderedSymbols.exchange, user);
+        if (pairs.Count != orderedSymbols.symbols.Count())
+        {
+            throw new Exception($"original and ordered pairs count is not the same: {pairs.Count} != {orderedSymbols.symbols.Count()}");
+        }
+
+        switch (orderedSymbols.exchange)
+        {
+            case Exchanges.GateIo:
+                {
+                    user.gate = this.OrderCryptoPairs(orderedSymbols.symbols, user.gate);
+                    break;
+                }
+            case Exchanges.CryptoCom:
+                {
+                    user.crypto = this.OrderCryptoPairs(orderedSymbols.symbols, user.crypto);
+                    break;
+                }
+            case Exchanges.Coinbase:
+                {
+                    user.coinbase = this.OrderCryptoPairs(orderedSymbols.symbols, user.coinbase);
+                    break;
+                }
+            case Exchanges.ByBit:
+                {
+                    user.bybit = this.OrderCryptoPairs(orderedSymbols.symbols, user.bybit);
+                    break;
+                }
+            case Exchanges.Binance:
+                {
+                    user.binance = this.OrderCryptoPairs(orderedSymbols.symbols, user.binance);
+                    break;
+                }
+            default: throw new ArgumentException($"unhandled exchange: {orderedSymbols.exchange}");
+        }
+
+        var response = await this.usersContainer!.ReplaceItemAsync(user, user.id);
+        return response.Resource;
+    }
+
+    public async Task<Trader> TogglePairArchiveAsync(string azureUserId, ExchangeSymbol exchangeSymbol)
+    {
+        var user = await this.GetUserAsync(azureUserId);
+        if (user is null)
+        {
+            throw new Exception($"failed to get user with id: {azureUserId}");
+        }
+
+        var pairs = GetExchangePairs(exchangeSymbol.exchange, user);
+        var pair = pairs.First(p => p.symbol == exchangeSymbol.symbol);
+        pair.isArchived = !pair.isArchived;
+
+        var response = await this.usersContainer!.ReplaceItemAsync(user, user.id);
+        return response.Resource;
+    }
+
     public async Task DoSomeTechService(string azureUserId)
     {
         var database = await this.GetDatabaseAsync();
@@ -157,14 +221,16 @@ public class TradingDbService : BaseDbService, ITradingDbService
 
         if (add)
         {
-            if (pair is not null) 
+            if (pair is not null)
             {
                 throw new Exception($"the pair {exchangeSymbol.symbol} was already added");
             }
 
             pairs.Add(new CryptoPair { symbol = exchangeSymbol.symbol, isArchived = false });
-        } else {
-            if (pair is null) 
+        }
+        else
+        {
+            if (pair is null)
             {
                 throw new Exception($"the pair {exchangeSymbol.symbol} was already removed");
             }
@@ -180,12 +246,23 @@ public class TradingDbService : BaseDbService, ITradingDbService
     {
         return exchange switch
         {
-            "GATE_IO" => user.gate,
-            "CRYPTO_COM" => user.crypto,
-            "COINBASE" => user.coinbase,
-            "BYBIT" => user.bybit,
-            "BINANCE" => user.binance,
+            Exchanges.GateIo => user.gate,
+            Exchanges.CryptoCom => user.crypto,
+            Exchanges.Coinbase => user.coinbase,
+            Exchanges.ByBit => user.bybit,
+            Exchanges.Binance => user.binance,
             _ => throw new ArgumentException($"unhandled exchange: {exchange}"),
         };
-  }
+    }
+
+    private IList<CryptoPair> OrderCryptoPairs(IEnumerable<string> orderedSymbols, IList<CryptoPair> originalPairs)
+    {
+        var orderedPairs = new List<CryptoPair>();
+        foreach (var symbol in orderedSymbols)
+        {
+            orderedPairs.Add(originalPairs.First(p => p.symbol == symbol));
+        }
+
+        return orderedPairs;
+    }
 }

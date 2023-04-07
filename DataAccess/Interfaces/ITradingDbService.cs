@@ -11,5 +11,7 @@ public interface ITradingDbService
     Task<IEnumerable<Trader>> GetUsersAsync();
     Task<Trader> AddPairAsync(string azureUserId, ExchangeSymbol exchangeSymbol);
     Task<Trader> RemovePairAsync(string azureUserId, ExchangeSymbol exchangeSymbol);
+    Task<Trader> OrderPairsAsync(string azureUserId, OrderedSymbols orderedSymbols);
+    Task<Trader> TogglePairArchiveAsync(string azureUserId, ExchangeSymbol exchangeSymbol);
     Task DoSomeTechService(string azureUserId);
 }

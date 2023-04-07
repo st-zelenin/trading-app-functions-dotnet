@@ -20,7 +20,7 @@ namespace Common
 
             return new AzureUser()
             {
-                oid = oid + "11",
+                oid = oid,
                 name = name
             };
         }
