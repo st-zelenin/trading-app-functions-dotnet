@@ -1,7 +1,4 @@
-﻿using System;
-using Common.Models;
-
-namespace Common.Interfaces;
+﻿namespace Common.Interfaces;
 
 public interface ISecretsService
 {

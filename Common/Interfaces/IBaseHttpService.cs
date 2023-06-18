@@ -1,12 +1,10 @@
-﻿using System;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 
-namespace Common.Interfaces
+namespace Common.Interfaces;
+
+public interface IBaseHttpService
 {
-    public interface IBaseHttpService
-    {
-        Task<T> GetRequestBody<T>(HttpRequest req);
-        string GetRequiredQueryParam(HttpRequest req, string key);
-    }
+    Task<T> GetRequestBody<T>(HttpRequest req);
+    string GetRequiredQueryParam(HttpRequest req, string key);
 }
 

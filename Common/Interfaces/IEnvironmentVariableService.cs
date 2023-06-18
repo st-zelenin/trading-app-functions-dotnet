@@ -1,9 +1,7 @@
-﻿using System;
-namespace Common.Interfaces
+﻿namespace Common.Interfaces;
+
+public interface IEnvironmentVariableService
 {
-    public interface IEnvironmentVariableService
-    {
-        string GetVariable(string key);
-    }
+    string GetVariable(string key);
 }
 

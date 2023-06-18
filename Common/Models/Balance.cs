@@ -1,10 +1,8 @@
-﻿using System;
-namespace Common.Models
+﻿namespace Common.Models;
+
+public class Balance
 {
-    public class Balance
-    {
-        public double available { get; set; }
-        public double locked { get; set; }
-    }
+    public double available { get; set; }
+    public double locked { get; set; }
 }
 

@@ -1,8 +1,7 @@
-﻿namespace Common.Models
+﻿namespace Common.Models;
+
+public class Ticker
 {
-    public class Ticker
-    {
-        public double last { get; set; }
-        public double change_percentage { get; set; }
-    }
+    public double last { get; set; }
+    public double change_percentage { get; set; }
 }

@@ -3,31 +3,29 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 
-namespace Common
+namespace Common;
+
+public class BaseHttpService : IBaseHttpService
 {
-    public class BaseHttpService: IBaseHttpService
+    public async Task<T> GetRequestBody<T>(HttpRequest req)
     {
-        public async Task<T> GetRequestBody<T>(HttpRequest req)
+        string requestBody;
+        using (var streamReader = new StreamReader(req.Body))
         {
-            string requestBody;
-            using (var streamReader = new StreamReader(req.Body))
-            {
-                requestBody = await streamReader.ReadToEndAsync();
-            }
-
-            return JsonConvert.DeserializeObject<T>(requestBody);
+            requestBody = await streamReader.ReadToEndAsync();
         }
 
-        public string GetRequiredQueryParam(HttpRequest req, string key)
-        {
-            StringValues side;
-            if (!req.Query.TryGetValue(key, out side))
-            {
-                throw new ArgumentException($"\"{key}\" query param is missing");
-            }
+        return JsonConvert.DeserializeObject<T>(requestBody);
+    }
 
-            return side;
+    public string GetRequiredQueryParam(HttpRequest req, string key)
+    {
+        if (!req.Query.TryGetValue(key, out StringValues side))
+        {
+            throw new ArgumentException($"\"{key}\" query param is missing");
         }
+
+        return side;
     }
 }
 

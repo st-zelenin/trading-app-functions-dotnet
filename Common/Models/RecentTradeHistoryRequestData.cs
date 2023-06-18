@@ -1,10 +1,9 @@
-﻿using System;
-namespace Common.Models
+﻿namespace Common.Models;
+
+public class RecentTradeHistoryRequestData
 {
-    public class RecentTradeHistoryRequestData
-    {
-        public OrderSide side { get; set; }
-        public int limit { get; set; }
-    }
+    public OrderSide side { get; set; }
+    public int limit { get; set; }
 }
+
 
