@@ -33,8 +33,7 @@ namespace Gate
                 new Dictionary<string, Average>(),
                 (acc, curr) =>
                 {
-                    Average average;
-                    if (!acc.TryGetValue(curr.currency_pair, out average))
+                    if (!acc.TryGetValue(curr.currency_pair, out Average average))
                     {
                         average = new Average()
                         {

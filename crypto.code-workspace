@@ -1,37 +1,52 @@
 {
-	"folders": [
-		{
-			"name": "Binance",
-			"path": "./Binance"
-		},
-		{
-			"name": "ByBit",
-			"path": "./ByBit"
-		},
-		{
-			"name": "Common",
-			"path": "./Common"
-		},
-		{
-			"name": "Crypto",
-			"path": "./Crypto"
-		},
-		{
-			"name": "DataAccess",
-			"path": "./DataAccess"
-		},
-		{
-			"name": "Gate",
-			"path": "./Gate"
-		},
-		{
-			"name": "User",
-			"path": "./User"
-		}
-	],
-	"settings": {
-		"debug.internalConsoleOptions": "neverOpen",
-		"omnisharp.enableMsBuildLoadProjectsOnDemand": true,
-		"editor.tabSize": 4
-	}
+  "folders": [
+    {
+      "name": "Binance",
+      "path": "./Binance"
+    },
+    {
+      "name": "ByBit",
+      "path": "./ByBit"
+    },
+    {
+      "name": "Common",
+      "path": "./Common"
+    },
+    {
+      "name": "Crypto",
+      "path": "./Crypto"
+    },
+    {
+      "name": "DataAccess",
+      "path": "./DataAccess"
+    },
+    {
+      "name": "Gate",
+      "path": "./Gate"
+    },
+    {
+      "name": "User",
+      "path": "./User"
+    }
+  ],
+  "settings": {
+    "debug.internalConsoleOptions": "neverOpen",
+    "omnisharp.enableMsBuildLoadProjectsOnDemand": true,
+    "editor.tabSize": 4
+  },
+  "launch": {
+    "configurations": [],
+    "compounds": [
+      {
+        "name": "Attach to all",
+        "configurations": [
+          "Binance",
+          "Gate",
+          "ByBit",
+          "Crypto",
+          "User"
+        ]
+      }
+    ]
+  }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -7,13 +6,10 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Binance.Interfaces;
 using Common;
 using Common.Interfaces;
 using Common.Models;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Core;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -70,7 +66,7 @@ public class HttpService : BaseHttpService, IHttpService
         if (!response.IsSuccessStatusCode)
         {
             log.LogError($"request failed: {content}");
-            throw new HttpRequestException($"\"POST\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            throw new HttpRequestException($"\"POST\" to \"{path}\" failed: \"{content}\"");
         }
 
         log.LogInformation($"\"POST\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
@@ -91,7 +87,7 @@ public class HttpService : BaseHttpService, IHttpService
         if (!response.IsSuccessStatusCode)
         {
             log.LogError($"request failed: {content}");
-            throw new HttpRequestException($"\"DELETE\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            throw new HttpRequestException($"\"DELETE\" to \"{path}\" failed: \"{content}\"");
         }
 
         log.LogInformation($"\"DELETE\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
@@ -111,7 +107,7 @@ public class HttpService : BaseHttpService, IHttpService
         if (!response.IsSuccessStatusCode)
         {
             log.LogError($"request failed: {content}");
-            throw new HttpRequestException($"\"GET\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+            throw new HttpRequestException($"\"GET\" to \"{path}\" failed: \"{content}\"");
         }
 
         log.LogInformation($"\"GET\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
@@ -160,7 +156,7 @@ public class HttpService : BaseHttpService, IHttpService
 
         if (data != null)
         {
-            TypeDescriptor.GetProperties(data)
+            _ = TypeDescriptor.GetProperties(data)
                 .Cast<PropertyDescriptor>()
                 .Aggregate(builder, (acc, curr) =>
                 {
@@ -186,13 +182,13 @@ public class HttpService : BaseHttpService, IHttpService
 
     private void buildQueryStringArrayParam(StringBuilder builder, IEnumerable<string> array, string paramName)
     {
-        if (array.Count() == 0)
+        if (!array.Any())
         {
             return;
         }
 
         builder.AppendFormat("{0}=[", paramName);
-        array.Aggregate(builder, (acc, curr) =>
+        _ = array.Aggregate(builder, (acc, curr) =>
         {
             acc.AppendFormat("\"{0}\",", curr);
 

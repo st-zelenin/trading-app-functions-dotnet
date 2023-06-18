@@ -35,11 +35,11 @@ public class GetRecentBuyAverages
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var body = new Dictionary<string, AverageSide>();
-        foreach (var pair in user.binance)
-        {
-            body.Add(pair.symbol, await this.AnalyzePairAsync(pair.symbol, azureUserId));
-        }
+        var tasks = user.binance.Select(async pair => new { pair.symbol, averages = await this.AnalyzePairAsync(pair.symbol, azureUserId) }).ToList();
+
+        var results = await Task.WhenAll(tasks);
+
+        var body = results.ToDictionary(result => result.symbol, result => result.averages);
 
         return new OkObjectResult(body);
     }
@@ -47,13 +47,12 @@ public class GetRecentBuyAverages
     private async Task<AverageSide> AnalyzePairAsync(string pair, string continerId)
     {
         var trades = await this.binanceDbService.GetFilledOrdersAsync(pair, continerId);
+        var tradesList = trades.ToList();
 
-        var lastSell = trades.FirstOrDefault(trade => trade.side == BinanceOrderSide.SELL);
+        var mostRecentSellIndex = tradesList.FindIndex(trade => trade.side == BinanceOrderSide.SELL);
+        var recentBuyOrders = mostRecentSellIndex == -1 ? tradesList : tradesList.GetRange(0, mostRecentSellIndex);
 
-        var recent = lastSell == null ? trades
-            : trades.Where(trade => trade.side == BinanceOrderSide.BUY && long.Parse(trade.updateTime) > long.Parse(lastSell.time));
-
-        return recent.Aggregate(
+        return recentBuyOrders.Aggregate(
             new AverageSide() { money = 0, price = 0, volume = 0 },
             (acc, curr) =>
             {

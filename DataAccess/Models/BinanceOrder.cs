@@ -33,11 +33,15 @@ public class BinanceOrder
 
     public CommonOrder ToCommonOrder()
     {
-        double amount;
-        if (!double.TryParse(this.executedQty, out amount) || amount <= 0)
+        if (!double.TryParse(this.executedQty, out double amount) || amount <= 0)
         {
             amount = double.Parse(this.origQty);
         }
+
+        double price = this.type == BinanceOrderType.LIMIT
+            ? double.Parse(this.price)
+            : double.Parse(this.cummulativeQuoteQty) / double.Parse(this.executedQty);
+
 
         return new CommonOrder()
         {
@@ -47,7 +51,7 @@ public class BinanceOrder
             updateTimestamp = long.Parse(this.updateTime),
             side = this.side == BinanceOrderSide.BUY ? CommonOrderSide.buy : CommonOrderSide.sell,
             amount = amount,
-            price = double.Parse(this.price),
+            price = price,
             status = this.ToCommonOrderStatus(),
             type = this.type == BinanceOrderType.LIMIT ? Common.Models.OrderType.limit : Common.Models.OrderType.market
         };

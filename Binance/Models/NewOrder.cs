@@ -17,15 +17,19 @@ public class BaseNewOrder
 public class NewLimitOrder: BaseNewOrder
 {
     public NewLimitOrder() : base(BinanceOrderType.LIMIT) { }
-
-    public string timeInForce { get; set; } = "GTC";
     public decimal quantity { get; set; }
+    public string timeInForce { get; set; } = "GTC";
     public decimal price { get; set; }
 }
 
-public class NewMarketOrder : BaseNewOrder
+public class NewMarketCoinsQuantityOrder : BaseNewOrder
 {
-    public NewMarketOrder() : base(BinanceOrderType.MARKET) { }
+    public NewMarketCoinsQuantityOrder() : base(BinanceOrderType.MARKET) { }
+    public decimal quantity { get; set; }
+}
 
+public class NewMarketTotalMoneyOrder : BaseNewOrder
+{
+    public NewMarketTotalMoneyOrder() : base(BinanceOrderType.MARKET) { }
     public decimal quoteOrderQty { get; set; }
 }

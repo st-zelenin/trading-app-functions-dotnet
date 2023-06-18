@@ -69,6 +69,31 @@ namespace DataAccess
             await Task.WhenAll(tasks);
         }
 
+        public async Task DoSomeTechService(string containerId)
+        {
+            var database = await this.GetDatabaseAsync();
+            var container = database.GetContainer(containerId);
+
+            var query = new QueryDefinition("SELECT * FROM c WHERE c.currency_pair = \"TONCOIN_USDT\"");
+            var results = await this.ExecuteReadQueryAsync<GateOrder>(query, container);
+
+            // foreach (var order in results)
+            // {
+            //    await container.DeleteItemAsync<GateOrder>(order.id, new PartitionKey(order.currency_pair));
+            //    var orig_instrument_name = order.currency_pair;
+            //    order.currency_pair = "TON_USDT";
+            //    try
+            //    {
+            //        await container.UpsertItemAsync(partitionKey: new PartitionKey(order.currency_pair), item: order);
+            //    }
+            //    catch
+            //    {
+            //        order.currency_pair = orig_instrument_name;
+            //        await container.UpsertItemAsync(partitionKey: new PartitionKey(order.currency_pair), item: order);
+            //    }
+            // }
+        }
+
         private async Task<Container> GetContainerAsync(string containerId)
         {
             var database = await this.GetDatabaseAsync();
