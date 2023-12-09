@@ -8,45 +8,44 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 
-namespace ByBit
+namespace ByBit;
+
+internal class CancelOrderRequestData
 {
-    internal class CancelOrderRequestData
+    public string id { get; set; }
+}
+
+internal class CancelOrderRequestParams
+{
+    public string orderId { get; set; }
+}
+
+public class CancelOrder
+{
+    private readonly IHttpService httpService;
+    private readonly IAuthService authService;
+
+    public CancelOrder(IHttpService httpService, IAuthService authService)
     {
-        public string id { get; set; }
+        this.httpService = httpService;
+        this.authService = authService;
     }
 
-    internal class CancelOrderRequestParams
+    [FunctionName("CancelOrder")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
     {
-        public string orderId { get; set; }
-    }
+        var data = await this.httpService.GetRequestBody<CancelOrderRequestData>(req);
 
-    public class CancelOrder
-    {
-        private readonly IHttpService httpService;
-        private readonly IAuthService authService;
-
-        public CancelOrder(IHttpService httpService, IAuthService authService)
+        if (data == null || data.id == null)
         {
-            this.httpService = httpService;
-            this.authService = authService;
+            throw new ArgumentNullException("id is missing");
         }
 
-        [FunctionName("CancelOrder")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
-        {
-            var data = await this.httpService.GetRequestBody<CancelOrderRequestData>(req);
+        this.authService.ValidateUser(req);
 
-            if (data == null || data.id == null)
-            {
-                throw new ArgumentNullException("id is missing");
-            }
+        var body = await this.httpService.PostAsync<CancelOrderRequestParams>("/spot/v3/private/cancel-order",
+            new CancelOrderRequestParams() { orderId = data.id });
 
-            this.authService.ValidateUser(req);
-
-            var body = await this.httpService.PostAsync<CancelOrderRequestParams>("/spot/v3/private/cancel-order",
-                new CancelOrderRequestParams() { orderId = data.id });
-
-            return new OkObjectResult(body);
-        }
+        return new OkObjectResult(body);
     }
 }

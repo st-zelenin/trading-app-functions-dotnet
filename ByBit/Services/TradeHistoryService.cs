@@ -11,6 +11,7 @@ namespace ByBit.Services
     internal class OrderHistoryRequestParams
     {
         public string symbol { get; set; }
+        public string category { get; set; }
     }
 
     internal class OrderHistoryRequestParamsWithLimit : OrderHistoryRequestParams
@@ -33,39 +34,37 @@ namespace ByBit.Services
 
         public Task ImportTradeHistoryAsync(string pair, string azureUserId)
         {
-            var data = new OrderHistoryRequestParams() { symbol = pair };
+            var data = new OrderHistoryRequestParams() { symbol = pair, category = "spot" };
 
             return this.ImportTradeHistoryAsync(data, azureUserId);
         }
 
         public Task UpdateRecentTradeHistoryAsync(string pair, string azureUserId)
         {
-            var data = new OrderHistoryRequestParamsWithLimit() { symbol = pair, limit = 100 };
+            var data = new OrderHistoryRequestParamsWithLimit() { symbol = pair, category = "spot", limit = 100 };
 
             return this.ImportTradeHistoryAsync(data, azureUserId);
         }
 
         private async Task ImportTradeHistoryAsync<T>(T data, string azureUserId) where T : OrderHistoryRequestParams
         {
-            var response = await this.httpService.GetAsync<ResponseWithResult<IEnumerable<ByBitOrder>>, OrderHistoryRequestParams>
-                ("/spot/v1/history-orders", data);
-            if (response.result.Count() <= 0)
+            var response = await this.httpService.GetV5Async<ResponseWithListResult_V5<OrderV5>, OrderHistoryRequestParams>
+                ("/v5/order/history", data);
+
+            if (response.result.list.Count() <= 0)
             {
                 return;
             }
 
-            var filledOrders = response.result.Where(o => o.status == ByBitOrderStatus.FILLED || o.type == ByBitOrderType.MARKET);
+            var filledOrders = response.result.list.Where(o => o.orderStatus == ByBitV5OrderStatus.Filled);
             if (filledOrders.Count() == 0)
             {
                 return;
             }
 
-            foreach (var filledOrder in filledOrders)
-            {
-                filledOrder.id = filledOrder.orderId;
-            }
+            var convertedOrders = filledOrders.Select(o => o.ToByBitOrder());
 
-            await this.bybitDbService.UpsertOrdersAsync(filledOrders, azureUserId);
+            await this.bybitDbService.UpsertOrdersAsync(convertedOrders, azureUserId);
         }
     }
 }

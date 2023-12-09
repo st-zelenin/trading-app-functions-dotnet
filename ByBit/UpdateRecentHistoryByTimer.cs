@@ -27,17 +27,13 @@ public class UpdateRecentHistoryByTimer
     {
         var users = await this.tradingDbService.GetUsersAsync();
 
-        var tasks = users.Aggregate(new List<Task>(), (acc, curr) =>
+        foreach (var user in users)
         {
-            foreach (var pair in curr.bybit)
+            foreach (var pair in user.bybit)
             {
-                acc.Add(this.tradeHistoryService.UpdateRecentTradeHistoryAsync(pair.symbol, curr.id));
+                await this.tradeHistoryService.UpdateRecentTradeHistoryAsync(pair.symbol, user.id);
             }
-
-            return acc;
-        });
-
-        await Task.WhenAll(tasks);
+        }
 
         log.LogInformation($"ByBit: UpdateRecentHistoryByTimer executed at: {DateTime.Now}");
     }

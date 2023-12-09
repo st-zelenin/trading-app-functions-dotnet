@@ -11,45 +11,49 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using CommonOrder = Common.Models.Order;
 
-namespace ByBit
+namespace ByBit;
+
+internal class GetOpenOrdersRequestParams
 {
-    public class GetOpenOrders
+    public string category { get; set; }
+}
+
+public class GetOpenOrders
+{
+    private readonly IAuthService authService;
+    private readonly IHttpService httpService;
+
+    public GetOpenOrders(IAuthService authService, IHttpService httpService)
     {
-        private readonly IAuthService authService;
-        private readonly IHttpService httpService;
+        this.authService = authService;
+        this.httpService = httpService;
+    }
 
-        public GetOpenOrders(IAuthService authService, IHttpService httpService)
-        {
-            this.authService = authService;
-            this.httpService = httpService;
-        }
+    [FunctionName("GetOpenOrders")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+    {
+        this.authService.ValidateUser(req);
 
-        [FunctionName("GetOpenOrders")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-        {
-            this.authService.ValidateUser(req);
+        var response = await this.httpService.GetV5Async<ResponseWithListResult_V5<OrderV5>, GetOpenOrdersRequestParams>("/v5/order/realtime", new GetOpenOrdersRequestParams() { category = "spot" });
 
-            var response = await this.httpService.GetAsync<ResponseWithResult<IEnumerable<ByBitOrder>>>("/spot/v1/open-orders");
+        var body = response.result.list.Aggregate(
+            new Dictionary<string, IList<CommonOrder>>(),
+            (acc, raw) =>
+            {
+                IList<CommonOrder> instrument;
 
-            var body = response.result.Aggregate(
-                new Dictionary<string, IList<CommonOrder>>(),
-                (acc, raw) =>
+                if (!acc.TryGetValue(raw.symbol, out instrument))
                 {
-                    IList<CommonOrder> instrument;
+                    instrument = new List<CommonOrder>();
+                    acc.Add(raw.symbol, instrument);
+                }
 
-                    if (!acc.TryGetValue(raw.symbol, out instrument))
-                    {
-                        instrument = new List<CommonOrder>();
-                        acc.Add(raw.symbol, instrument);
-                    }
+                instrument.Add(raw.ToByBitOrder().ToCommonOrder());
 
-                    instrument.Add(raw.ToCommonOrder());
-
-                    return acc;
-                });
+                return acc;
+            });
 
 
-            return new OkObjectResult(body);
-        }
+        return new OkObjectResult(body);
     }
 }
