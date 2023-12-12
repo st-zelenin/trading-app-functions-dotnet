@@ -55,6 +55,9 @@ namespace Crypto
 
             do
             {
+                // https://exchange-docs.crypto.com/spot/index.html#rate-limits
+                await Task.Delay(TimeSpan.FromSeconds(1));
+
                 await context.CallActivityAsync<string>("ImportHistory_ImportPeriod",
                     new ImportHistoryActivityInput() { azureUserId = input.azureUserId, end = end, start = start });
 
@@ -81,8 +84,8 @@ namespace Crypto
             //    await Task.Delay(TimeSpan.FromTicks(waitTicks));
             //}
 
-            // https://exchange-docs.crypto.com/spot/index.html#rate-limits
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            //// https://exchange-docs.crypto.com/spot/index.html#rate-limits
+            //await Task.Delay(TimeSpan.FromSeconds(1));
             //}
             //catch (TooManyRequestsException)
             //{

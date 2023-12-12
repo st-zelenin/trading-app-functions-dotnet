@@ -27,17 +27,13 @@ public class UpdateRecentHistoryByTimer
     {
         var users = await this.tradingDbService.GetUsersAsync();
 
-        var tasks = users.Aggregate(new List<Task>(), (acc, curr) =>
+        foreach (var user in users)
         {
-            foreach (var pair in curr.gate)
+            foreach (var pair in user.gate)
             {
-                acc.Add(this.tradeHistoryService.UpdateRecentTradeHistory(pair.symbol, curr.id));
+                await this.tradeHistoryService.UpdateRecentTradeHistory(pair.symbol, user.id);
             }
-
-            return acc;
-        });
-
-        await Task.WhenAll(tasks);
+        }
 
         log.LogInformation($"Gate: UpdateRecentHistoryByTimer executed at: {DateTime.Now}");
     }

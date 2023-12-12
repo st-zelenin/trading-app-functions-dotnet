@@ -36,6 +36,7 @@ namespace Crypto.Services
 
             var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, ImportPeriodTradeHistoryRequestData>
                 ("private/get-order-history", data);
+
             if (response.result.order_list.Count() <= 0)
             {
                 return;
