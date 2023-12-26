@@ -56,7 +56,7 @@ namespace ByBit.Services
                 return;
             }
 
-            var filledOrders = response.result.list.Where(o => o.orderStatus == ByBitV5OrderStatus.Filled);
+            var filledOrders = response.result.list.Where(o => o.orderStatus == ByBitV5OrderStatus.Filled || (o.orderType == ByBitV5OrderType.Market && o.orderStatus == ByBitV5OrderStatus.PartiallyFilledCanceled) );
             if (filledOrders.Count() == 0)
             {
                 return;

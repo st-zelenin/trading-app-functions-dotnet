@@ -63,6 +63,7 @@ public class OrderV5
             case ByBitV5OrderStatus.Rejected:
                 return ByBitOrderStatus.REJECTED;
             case ByBitV5OrderStatus.PartiallyFilled:
+            case ByBitV5OrderStatus.PartiallyFilledCanceled:
                 return ByBitOrderStatus.PARTIALLY_FILLED;
             case ByBitV5OrderStatus.Filled:
                 return ByBitOrderStatus.FILLED;
@@ -93,5 +94,5 @@ public enum ByBitV5OrderStatus
 public enum ByBitV5OrderType
 {
     Market = 1,
-    Limit
+    Limit,
 }

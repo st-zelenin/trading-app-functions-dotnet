@@ -15,7 +15,7 @@ namespace ByBit.Models
         public ByBitOrderSide side { get; set; }
     }
 
-    public class NewLimitOrder: BaseNewOrder
+    public class NewLimitOrder : BaseNewOrder
     {
         public NewLimitOrder() : base(ByBitOrderType.LIMIT) { }
 
@@ -25,5 +25,32 @@ namespace ByBit.Models
     public class NewMarketOrder : BaseNewOrder
     {
         public NewMarketOrder() : base(ByBitOrderType.MARKET) { }
+    }
+
+    public class BaseNewOrderV5
+    {
+        public BaseNewOrderV5(ByBitV5OrderType orderType)
+        {
+            this.orderType = orderType;
+        }
+
+        public string category = "spot";
+
+        public string symbol { get; set; }
+        public ByBitV5OrderType orderType { get; private set; }
+        public ByBitOrderSide side { get; set; }
+        public string qty { get; set; }
+    }
+
+    public class NewMarketOrderV5 : BaseNewOrderV5
+    {
+        public NewMarketOrderV5() : base(ByBitV5OrderType.Market) { }
+    }
+
+    public class NewLimitOrderV5 : BaseNewOrderV5
+    {
+        public NewLimitOrderV5() : base(ByBitV5OrderType.Limit) { }
+
+        public string price { get; set; }
     }
 }
