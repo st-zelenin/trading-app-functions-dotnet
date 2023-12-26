@@ -34,7 +34,7 @@ public class GetBalances
     {
         this.authService.ValidateUser(req);
 
-        var response = await this.httpService.GetAsync<ResponseWithResult<BalancesResponseResult>>("/spot/v1/account");
+        var response = await this.httpService.GetV5Async<ResponseWithResult<BalancesResponseResult>>("/spot/v3/private/account");
 
         var body = response.result.balances.Aggregate(
             new Dictionary<string, CommonBalance>(),
