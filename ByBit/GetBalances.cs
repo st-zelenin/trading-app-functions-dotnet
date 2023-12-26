@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ByBit.Interfaces;
@@ -10,41 +11,40 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using CommonBalance = Common.Models.Balance;
 
-namespace Crypto
+namespace ByBit;
+
+internal class BalancesResponseResult
 {
-    internal class BalancesResponseResult
+    public IEnumerable<Balance> balances { get; set; }
+}
+
+public class GetBalances
+{
+    private readonly IAuthService authService;
+    private readonly IHttpService httpService;
+
+    public GetBalances(IAuthService authService, IHttpService httpService)
     {
-        public IEnumerable<Balance> balances { get; set; }
+        this.authService = authService;
+        this.httpService = httpService;
     }
 
-    public class GetBalances
+    [FunctionName("GetBalances")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
-        private readonly IAuthService authService;
-        private readonly IHttpService httpService;
+        this.authService.ValidateUser(req);
 
-        public GetBalances(IAuthService authService, IHttpService httpService)
-        {
-            this.authService = authService;
-            this.httpService = httpService;
-        }
+        var response = await this.httpService.GetAsync<ResponseWithResult<BalancesResponseResult>>("/spot/v1/account");
 
-        [FunctionName("GetBalances")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-        {
-            this.authService.ValidateUser(req);
+        var body = response.result.balances.Aggregate(
+            new Dictionary<string, CommonBalance>(),
+            (acc, raw) =>
+            {
+                acc.Add(raw.coinId, new CommonBalance() { available = double.Parse(raw.free), locked = double.Parse(raw.locked) });
+                return acc;
+            });
 
-            var response = await this.httpService.GetAsync<ResponseWithResult<BalancesResponseResult>>("/spot/v1/account");
-
-            var body = response.result.balances.Aggregate(
-                new Dictionary<string, CommonBalance>(),
-                (acc, raw) =>
-                {
-                    acc.Add(raw.coinId, new CommonBalance() { available = double.Parse(raw.free), locked = double.Parse(raw.locked) });
-                    return acc;
-                });
-
-            return new OkObjectResult(body);
-        }
+        return new OkObjectResult(body);
     }
 }
 

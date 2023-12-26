@@ -55,6 +55,11 @@ public class HttpService : BaseHttpService, IHttpService
         return JsonConvert.DeserializeObject<TRes>(content);
     }
 
+    public Task<TRes> GetV5Async<TRes>(string path)
+    {
+        return this.SendV5Request<TRes>(path, HttpMethod.Get, null, null);
+    }
+
     public Task<TRes> GetV5Async<TRes, TParams>(string path, TParams parameters)
     {
         var paramsString = this.GetRequestParamsString(parameters);
