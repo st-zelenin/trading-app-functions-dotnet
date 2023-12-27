@@ -31,7 +31,7 @@ public class GetTickers
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Ticker>, GetTickersParams>("/v5/market/tickers", new GetTickersParams { category = "spot" });
+        var response = await this.httpService.GetUnsignedAsync<ResponseWithListResult_V5<Ticker>, GetTickersParams>("/v5/market/tickers", new GetTickersParams { category = "spot" });
 
         var body = user.bybit.Aggregate(
             new Dictionary<string, Common.Models.Ticker>(),

@@ -26,7 +26,7 @@ public class GetCurrencyPairs
     {
         this.authService.ValidateUser(req);
 
-        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Product>, SingleSpotCategoryParams>("/v5/market/instruments-info", new SingleSpotCategoryParams { });
+        var response = await this.httpService.GetUnsignedAsync<ResponseWithListResult_V5<Product>, SingleSpotCategoryParams>("/v5/market/instruments-info", new SingleSpotCategoryParams { });
 
         var body = response.result.list.Select(t => t.symbol);
 

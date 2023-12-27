@@ -11,9 +11,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Newtonsoft.Json;
 using ByBitProduct = ByBit.Models.Product;
 
 namespace ByBit;
+
+internal class CreateOrderResponce
+{
+    public string orderId { get; set; }
+}
 
 public class CreateOrder
 {
@@ -37,18 +43,58 @@ public class CreateOrder
 
         this.authService.ValidateUser(req);
 
-        var product = await this.GetProductAsync(order.currencyPair);
-        var newOrder = await this.GetNewOrder(order, product);
-
-        if (newOrder.type == ByBitOrderType.MARKET)
+        if (order.market == true)
         {
-            var newMarketOrderResult =
-                await this.httpService.PostAsync("/spot/v1/order", (NewMarketOrder)newOrder);
-            return new OkObjectResult(newMarketOrderResult);
+            return await this.CreateMarketOrder(order);
         }
 
-        var newLimitOrderResult = await this.httpService.PostAsync("/spot/v1/order", (NewLimitOrder)newOrder);
-        return new OkObjectResult(newLimitOrderResult);
+        double price;
+        if (!double.TryParse(order.price, out price))
+        {
+            throw new ArgumentException($"unexpected price value: {order.price}");
+        }
+
+        var tickers = await this.httpService.GetUnsignedAsync<ResponseWithListResult_V5<Models.Ticker>, SpotSymbolParams>("/v5/market/tickers", new SpotSymbolParams { symbol = order.currencyPair });
+
+        double tickerPrice;
+        if (tickers.result.list == null || tickers.result.list.Count() == 0 || !double.TryParse(tickers.result.list.First().lastPrice, out tickerPrice))
+        {
+            return await this.CreateLimitOrder(order, price);
+        }
+
+        if (order.side == CommonOrderSides.buy && price > tickerPrice)
+        {
+            return await this.CreateMarketOrder(order);
+        }
+
+        if (order.side == CommonOrderSides.sell && price < tickerPrice)
+        {
+            return await this.CreateMarketOrder(order);
+        }
+
+        return await this.CreateLimitOrder(order, price);
+    }
+
+    private async Task<IActionResult> CreateMarketOrder(NewOrder order)
+    {
+        var newOrder = this.ToNewMarketOrder(order);
+        var serializedBody = JsonConvert.SerializeObject(newOrder);
+
+        var newOrderResult =
+            await this.httpService.PostAsync<ResponseWithResult<CreateOrderResponce>>("/v5/order/create", serializedBody);
+        return new OkObjectResult(newOrderResult);
+    }
+
+    private async Task<IActionResult> CreateLimitOrder(NewOrder order, double price)
+    {
+        var product = await this.GetProductAsync(order.currencyPair);
+
+        var newOrder = this.ToNewLimitOrder(order, product, price);
+        var serializedBody = JsonConvert.SerializeObject(newOrder);
+
+        var newOrderResult =
+            await this.httpService.PostAsync<ResponseWithResult<CreateOrderResponce>>("/v5/order/create", serializedBody);
+        return new OkObjectResult(newOrderResult);
     }
 
     private async Task<ByBitProduct> GetProductAsync(string symbol)
@@ -58,59 +104,24 @@ public class CreateOrder
             throw new ArgumentException("missing \"currencyPair\"");
         }
 
-        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Models.Product>, SpotSymbolParams>("/v5/market/instruments-info", new SpotSymbolParams { symbol = symbol });
+        var response = await this.httpService.GetUnsignedAsync<ResponseWithListResult_V5<Models.Product>, SpotSymbolParams>("/v5/market/instruments-info", new SpotSymbolParams { symbol = symbol });
 
         return response.result.list.First();
     }
 
-    private async Task<BaseNewOrder> GetNewOrder(NewOrder order, ByBitProduct product)
-    {
-        if (order.market == true)
-        {
-            return this.ToNewMarketOrder(order);
-        }
-
-        double price;
-        if (!double.TryParse(order.price, out price))
-        {
-            throw new ArgumentException($"unexpected price value: {order.price}");
-        }
-
-        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Models.Ticker>, SpotSymbolParams>("/v5/market/tickers", new SpotSymbolParams { symbol = order.currencyPair });
-
-        double tickerPrice;
-        if (response.result.list == null || response.result.list.Count() == 0 || !double.TryParse(response.result.list.First().lastPrice, out tickerPrice))
-        {
-            return this.ToNewLimitOrder(order, product, price);
-        }
-
-        if (order.side == CommonOrderSides.buy && price > tickerPrice)
-        {
-            return this.ToNewMarketOrder(order);
-        }
-
-        if (order.side == CommonOrderSides.sell && price < tickerPrice)
-        {
-            return this.ToNewMarketOrder(order);
-        }
-
-        return this.ToNewLimitOrder(order, product, price);
-    }
-
-
     private NewMarketOrder ToNewMarketOrder(NewOrder order)
     {
-        double amount;
-        if (!double.TryParse(order.amount, out amount) || amount <= 0)
+        double total;
+        if (!double.TryParse(order.total, out total) || total <= 0)
         {
-            throw new ArgumentException($"unexpected amount value: {amount}");
+            throw new ArgumentException($"unexpected total value: {total}");
         }
 
         return new NewMarketOrder()
         {
             symbol = order.currencyPair,
             side = order.side == CommonOrderSides.sell ? ByBitOrderSide.Sell : ByBitOrderSide.Buy,
-            qty = amount
+            qty = total.ToString()
         };
     }
 
@@ -138,14 +149,15 @@ public class CreateOrder
         {
             symbol = order.currencyPair,
             side = order.side == CommonOrderSides.sell ? ByBitOrderSide.Sell : ByBitOrderSide.Buy,
-            price = this.RoundToSmallestUnit(price, minPricePrecision),
-            qty = this.RoundToSmallestUnit(amount, basePrecision)
+            price = this.GetRoundedDecimalString(price, minPricePrecision),
+            qty = this.GetRoundedDecimalString(amount, basePrecision)
         };
     }
 
-    private double RoundToSmallestUnit(double num, double smallestUnit)
+    private string GetRoundedDecimalString(double num, double smallestUnit)
     {
-        var x = Math.Round(1 / smallestUnit); // TODO: TEST!!! "0.00001"
-        return Math.Round(num * x) / x;
+        var precision = Math.Round(1 / smallestUnit); // TODO: TEST!!! "0.00001"
+        var rounded = Math.Round(num * precision) / precision;
+        return rounded.ToString();
     }
 }

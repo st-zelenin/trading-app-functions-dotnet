@@ -36,7 +36,7 @@ public class GetProducts
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<Product>, SingleSpotCategoryParams>("/v5/market/instruments-info", new SingleSpotCategoryParams { });
+        var response = await this.httpService.GetUnsignedAsync<ResponseWithListResult_V5<Product>, SingleSpotCategoryParams>("/v5/market/instruments-info", new SingleSpotCategoryParams { });
 
         var body = user.bybit.Aggregate(
             new Dictionary<string, Common.Models.Product>(),

@@ -48,7 +48,7 @@ namespace ByBit.Services
 
         private async Task ImportTradeHistoryAsync<T>(T data, string azureUserId) where T : OrderHistoryRequestParams
         {
-            var response = await this.httpService.GetV5Async<ResponseWithListResult_V5<OrderV5>, OrderHistoryRequestParams>
+            var response = await this.httpService.GetAsync<ResponseWithListResult_V5<OrderV5>, OrderHistoryRequestParams>
                 ("/v5/order/history", data);
 
             if (response.result.list.Count() <= 0)

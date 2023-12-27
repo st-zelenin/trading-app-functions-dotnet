@@ -15,6 +15,7 @@ using Common.Interfaces;
 using Common.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Reflection.Metadata;
 
 namespace ByBit.Services;
 
@@ -32,14 +33,9 @@ public class HttpService : BaseHttpService, IHttpService
         this.client = client;
     }
 
-    public Task<TRes> GetAsync<TRes>(string path)
+    public async Task<TRes> GetUnsignedAsync<TRes, TParams>(string path, TParams parameters)
     {
-        return this.GetAsync<TRes, object>(path, new object());
-    }
-
-    public async Task<TRes> GetAsync<TRes, TParams>(string path, TParams parameters)
-    {
-        var paramsString = await this.GetSignedRequestParams(parameters);
+        var paramsString = this.GetRequestParamsString(parameters);
 
         var response = await client.GetAsync($"{path}?{paramsString}");
         string content = await response.Content.ReadAsStringAsync();
@@ -55,91 +51,60 @@ public class HttpService : BaseHttpService, IHttpService
         return JsonConvert.DeserializeObject<TRes>(content);
     }
 
-    public Task<TRes> GetV5Async<TRes>(string path)
+    public Task<TRes> GetAsync<TRes>(string path)
     {
         return this.SendV5Request<TRes>(path, HttpMethod.Get, null, null);
     }
 
-    public Task<TRes> GetV5Async<TRes, TParams>(string path, TParams parameters)
+    public Task<TRes> GetAsync<TRes, TParams>(string path, TParams parameters)
     {
         var paramsString = this.GetRequestParamsString(parameters);
         return this.SendV5Request<TRes>(path, HttpMethod.Get, paramsString, null);
     }
 
-    public async Task<TRes> DeleteAsync<TRes, TParams>(string path, TParams parameters)
+    public Task<TRes> PostAsync<TRes>(string path, string bodyString)
     {
-        var paramsString = await this.GetSignedRequestParams(parameters);
-
-        var response = await client.DeleteAsync($"{path}?{paramsString}");
-        string content = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
-        {
-            log.LogError($"request failed: {content}");
-            throw new HttpRequestException($"\"DELETE\" to \"{path}\" failed with code \"{response.StatusCode}\"");
-        }
-
-        log.LogInformation($"\"DELETE\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
-
-        return JsonConvert.DeserializeObject<TRes>(content);
+        return this.SendV5Request<TRes>(path, HttpMethod.Post, null, bodyString);
     }
 
-    public async Task<BaseResponse> PostAsync<TBody>(string path, TBody body)
-    {
-        var paramsString = await this.GetSignedRequestParams(body);
+    //private async Task<string> GetSignedRequestParams<T>(T data)
+    //{
+    //    if (this.apiKeys == null)
+    //    {
+    //        this.apiKeys = await this.secretsService.GetSecretAsync<ExchangeApiKeysSecret>(SecretsKeys.ByBitApiKey);
+    //    }
 
-        var response = await client.PostAsync($"{path}?{paramsString}", null);
-        string content = await response.Content.ReadAsStringAsync();
+    //    var sortedDictionary = new SortedDictionary<string, object>();
+    //    sortedDictionary.Add("api_key", this.apiKeys.apiKey);
+    //    sortedDictionary.Add("timestamp", new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds());
 
-        if (!response.IsSuccessStatusCode)
-        {
-            log.LogError($"request failed: {content}");
-            throw new HttpRequestException($"\"POST\" to \"{path}\" failed with code \"{response.StatusCode}\"");
-        }
+    //    var sortedParams = TypeDescriptor.GetProperties(data)
+    //        .Cast<PropertyDescriptor>()
+    //        .Select(pd => new { Name = pd.Name, Value = pd.GetValue(data) })
+    //        .Aggregate(sortedDictionary, (acc, pair) =>
+    //        {
+    //            acc.Add(pair.Name, pair.Value);
+    //            return acc;
+    //        })
+    //        .Select((pair) => $"{pair.Key}={HttpUtility.UrlEncode(pair.Value.ToString())}");
 
-        log.LogInformation($"\"POST\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
+    //    var paramsString = string.Join('&', sortedParams);
 
-        return JsonConvert.DeserializeObject<BaseResponse>(content);
-    }
+    //    var encoding = new ASCIIEncoding();
 
-    private async Task<string> GetSignedRequestParams<T>(T data)
-    {
-        if (this.apiKeys == null)
-        {
-            this.apiKeys = await this.secretsService.GetSecretAsync<ExchangeApiKeysSecret>(SecretsKeys.ByBitApiKey);
-        }
+    //    byte[] payload = encoding.GetBytes(paramsString);
+    //    byte[] secret = encoding.GetBytes(apiKeys.secretKey);
 
-        var sortedDictionary = new SortedDictionary<string, object>();
-        sortedDictionary.Add("api_key", this.apiKeys.apiKey);
-        sortedDictionary.Add("timestamp", new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds());
+    //    byte[] hash;
+    //    using (var hmac = new HMACSHA256(secret))
+    //    {
+    //        hash = hmac.ComputeHash(payload);
+    //    }
 
-        var sortedParams = TypeDescriptor.GetProperties(data)
-            .Cast<PropertyDescriptor>()
-            .Select(pd => new { Name = pd.Name, Value = pd.GetValue(data) })
-            .Aggregate(sortedDictionary, (acc, pair) =>
-            {
-                acc.Add(pair.Name, pair.Value);
-                return acc;
-            })
-            .Select((pair) => $"{pair.Key}={HttpUtility.UrlEncode(pair.Value.ToString())}");
+    //    var sign = BitConverter.ToString(hash).Replace("-", "").ToLower();
 
-        var paramsString = string.Join('&', sortedParams);
-
-        var encoding = new ASCIIEncoding();
-
-        byte[] payload = encoding.GetBytes(paramsString);
-        byte[] secret = encoding.GetBytes(apiKeys.secretKey);
-
-        byte[] hash;
-        using (var hmac = new HMACSHA256(secret))
-        {
-            hash = hmac.ComputeHash(payload);
-        }
-
-        var sign = BitConverter.ToString(hash).Replace("-", "").ToLower();
-
-        return $"{paramsString}&sign={sign}";
-    }
+    //    return $"{paramsString}&sign={sign}";
+    //}
 
     private async Task<TRes> SendV5Request<TRes>(string path, HttpMethod method, string paramsString, string serializedBody)
     {

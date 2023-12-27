@@ -34,7 +34,7 @@ public class GetOpenOrders
     {
         this.authService.ValidateUser(req);
 
-        var response = await this.httpService.GetV5Async<ResponseWithListResult_V5<OrderV5>, GetOpenOrdersRequestParams>("/v5/order/realtime", new GetOpenOrdersRequestParams() { category = "spot" });
+        var response = await this.httpService.GetAsync<ResponseWithListResult_V5<OrderV5>, GetOpenOrdersRequestParams>("/v5/order/realtime", new GetOpenOrdersRequestParams() { category = "spot" });
 
         var body = response.result.list.Aggregate(
             new Dictionary<string, IList<CommonOrder>>(),
