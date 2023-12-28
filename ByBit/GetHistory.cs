@@ -41,7 +41,7 @@ public class GetHistory
 
         var orders = await this.bybitDbService.GetOrdersAsync(pair, azureUserId);
 
-        var body = orders.Select(o => o.ToCommonOrder());
+        var body = orders.Where(o => o.status == DataAccess.Models.ByBitOrderStatus.FILLED || o.status == DataAccess.Models.ByBitOrderStatus.PARTIALLY_FILLED).Select(o => o.ToCommonOrder());
 
         return new OkObjectResult(body);
     }
