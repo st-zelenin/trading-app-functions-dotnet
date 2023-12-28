@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Common.Interfaces;
 using DataAccess.Interfaces;
+using DataAccess.Models;
 using Gate.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +41,7 @@ public class GetHistory
 
         var orders = await this.gateDbService.GetOrdersAsync(pair, azureUserId);
 
-        var body = orders.Select(o => o.ToCommonOrder());
+        var body = orders.Where(o => o.status == GateOrderStatus.closed).Select(o => o.ToCommonOrder());
 
         return new OkObjectResult(body);
     }

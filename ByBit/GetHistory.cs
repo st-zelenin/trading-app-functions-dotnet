@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using ByBit.Interfaces;
 using Common.Interfaces;
 using DataAccess.Interfaces;
+using DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -41,7 +42,7 @@ public class GetHistory
 
         var orders = await this.bybitDbService.GetOrdersAsync(pair, azureUserId);
 
-        var body = orders.Where(o => o.status == DataAccess.Models.ByBitOrderStatus.FILLED || o.status == DataAccess.Models.ByBitOrderStatus.PARTIALLY_FILLED).Select(o => o.ToCommonOrder());
+        var body = orders.Where(o => o.status == ByBitOrderStatus.FILLED || o.status == ByBitOrderStatus.PARTIALLY_FILLED).Select(o => o.ToCommonOrder());
 
         return new OkObjectResult(body);
     }

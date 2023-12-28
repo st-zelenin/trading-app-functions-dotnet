@@ -16,7 +16,7 @@ namespace DataAccess
         public async Task<IEnumerable<GateAverage>> GetAveragesAsync(string containerId)
         {
             var query =
-                "SELECT SUM(StringToNumber(c.filled_total)) AS total_money, SUM(is_defined(c.avg_deal_price) ? StringToNumber(c.filled_total)/StringToNumber(c.avg_deal_price) : StringToNumber(c.amount)) AS total_volume, c.side, c.currency_pair FROM c WHERE c.status = 'closed' GROUP BY c.side, c.currency_pair";
+                "SELECT SUM(StringToNumber(c.filled_total)) AS total_money, SUM(is_defined(c.avg_deal_price) AND c.avg_deal_price != null ? StringToNumber(c.filled_total)/StringToNumber(c.avg_deal_price) : StringToNumber(c.amount)) AS total_volume, c.side, c.currency_pair FROM c WHERE c.status = 'closed' GROUP BY c.side, c.currency_pair";
 
             var container = await this.GetContainerAsync(containerId);
 
