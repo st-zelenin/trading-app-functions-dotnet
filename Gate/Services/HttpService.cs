@@ -93,7 +93,7 @@ namespace Gate.Services
             if (!response.IsSuccessStatusCode)
             {
                 log.LogError($"request failed: {content}");
-                throw new HttpRequestException($"\"{method}\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+                throw new HttpRequestException($"{method} to {path} failed with code {response.StatusCode}, reason: {content}");
             }
 
             log.LogInformation($"\"{method}\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");

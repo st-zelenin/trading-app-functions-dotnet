@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Common.Interfaces;
 using Common.Models;
@@ -44,9 +45,19 @@ public class CreateOrder
 
         var newOrder = await this.GetNewOrder(order);
 
-        var body = await this.httpService.PostAsync<GateOrder, BaseNewOrder>("/spot/orders", newOrder);
+        try
+        {
+            var body = await this.httpService.PostAsync<GateOrder, BaseNewOrder>("/spot/orders", newOrder);
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (HttpRequestException ex)
+        {
+            return new ObjectResult(new { error = ex.Message })
+            {
+                StatusCode = 500
+            };
+        }
     }
 
     private async Task<BaseNewOrder> GetNewOrder(NewOrder order)
