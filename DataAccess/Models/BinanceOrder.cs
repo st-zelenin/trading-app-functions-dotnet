@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Common.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using CommonOrder = Common.Models.Order;
 using CommonOrderSide = Common.Models.OrderSide;
@@ -57,7 +58,6 @@ public class BinanceOrder
         };
     }
 
-
     private CommonOrderStatus ToCommonOrderStatus()
     {
         switch (this.status)
@@ -77,7 +77,6 @@ public class BinanceOrder
         }
     }
 }
-
 
 [JsonConverter(typeof(StringEnumConverter))]
 public enum BinanceOrderStatus

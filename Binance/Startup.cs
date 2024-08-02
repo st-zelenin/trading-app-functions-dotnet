@@ -24,6 +24,7 @@ public class Startup : FunctionsStartup
         builder.Services.AddSingleton<ITradingDbService, TradingDbService>();
         builder.Services.AddSingleton<IBinanceDbService, BinanceDbService>();
         builder.Services.AddSingleton<ITradeHistoryService, TradeHistoryService>();
+        builder.Services.AddSingleton<IDexDbService, DexDbService>();
 
         builder.Services.AddTransient<IHttpService, HttpService>();
 

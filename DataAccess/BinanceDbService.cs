@@ -1,12 +1,11 @@
-﻿using System;
-using Common.Interfaces;
+﻿using Common.Interfaces;
 using DataAccess.Interfaces;
 using DataAccess.Models;
 using Microsoft.Azure.Cosmos;
 
 namespace DataAccess
 {
-	public class BinanceDbService : BaseDbService, IBinanceDbService
+    public class BinanceDbService : BaseDbService, IBinanceDbService
     {
         public BinanceDbService(ISecretsService secretsService, IEnvironmentVariableService environmentVariableService)
             : base("binance", secretsService, environmentVariableService)
@@ -66,6 +65,7 @@ namespace DataAccess
 
             await Task.WhenAll(tasks);
         }
+
 
         private async Task<IEnumerable<BinanceOrder>> QueryOrdersAsync(string containerId, QueryDefinition query)
         {

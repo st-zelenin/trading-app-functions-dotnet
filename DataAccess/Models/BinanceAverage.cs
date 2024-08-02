@@ -1,7 +1,6 @@
-﻿using System;
-namespace DataAccess.Models
+﻿namespace DataAccess.Models
 {
-	public class BinanceAverage : CryptoAverage
+    public class BinanceAverage : CryptoAverage
     {
     }
 }

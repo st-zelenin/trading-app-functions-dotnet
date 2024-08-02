@@ -17,13 +17,15 @@ namespace Binance;
 
 public class GetAverages
 {
-    private readonly IBinanceDbService binanceDbService;
     private readonly IAuthService authService;
+    private readonly IBinanceDbService binanceDbService;
+    private readonly IDexDbService dexDbService;
 
-    public GetAverages(IBinanceDbService binanceDbService, IAuthService authService)
+    public GetAverages(IAuthService authService, IBinanceDbService binanceDbService, IDexDbService dexDbService)
     {
-        this.binanceDbService = binanceDbService;
         this.authService = authService;
+        this.binanceDbService = binanceDbService;
+        this.dexDbService = dexDbService;
     }
 
     [FunctionName("GetAverages")]
@@ -31,15 +33,14 @@ public class GetAverages
     {
         var azureUserId = this.authService.GetUserId(req);
 
-        var rawAverages = await this.binanceDbService.GetAveragesAsync(azureUserId);
+        var rawCexAverages = await this.binanceDbService.GetAveragesAsync(azureUserId);
+        var rawDexverages = await this.dexDbService.GetAveragesAsync(azureUserId, "binance");
 
-        var body = rawAverages.Aggregate(
+        var body = rawCexAverages.Concat(rawDexverages).Aggregate(
             new Dictionary<string, Average>(),
             (acc, curr) =>
             {
-                Average average;
-
-                if (!acc.TryGetValue(curr.currency_pair, out average))
+                if (!acc.TryGetValue(curr.currency_pair, out Average average))
                 {
                     average = new Average()
                     {
@@ -50,11 +51,11 @@ public class GetAverages
                     acc.Add(curr.currency_pair, average);
                 }
 
-                var side = curr.side == "BUY" ? average.buy : average.sell;
+                var side = curr.side.ToLower() == "buy" ? average.buy : average.sell;
 
-                side.money = curr.total_money;
-                side.volume = curr.total_volume;
-                side.price = curr.total_money / curr.total_volume;
+                side.money += curr.total_money;
+                side.volume += curr.total_volume;
+                side.price = side.money / side.volume;
 
                 return acc;
             });

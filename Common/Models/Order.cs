@@ -14,6 +14,8 @@ public class Order
     public double price { get; set; }
     public OrderStatus status { get; set; }
     public OrderType type { get; set; }
+    public string associatedCex { get; set; } = string.Empty;
+    public bool isDex { get; set; } = false;
 }
 
 [JsonConverter(typeof(StringEnumConverter))]
