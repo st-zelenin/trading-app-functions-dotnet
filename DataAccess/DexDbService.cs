@@ -15,11 +15,10 @@ public class DexDbService : BaseDbService, IDexDbService
 
     public async Task<IEnumerable<CryptoAverage>> GetAveragesAsync(string containerId, string associatedCex)
     {
+        var container = await GetContainerAsync(containerId);
+
         var query =
             "SELECT SUM(c.amount * c.price) AS total_money, SUM(c.amount) AS total_volume, c.side, c.currencyPair AS currency_pair FROM c GROUP BY c.side, c.currencyPair";
-
-        var database = await this.GetDatabaseAsync();
-        var container = database.GetContainer(containerId);
 
         return await this.ExecuteReadQueryAsync<CryptoAverage>(query, container);
     }
@@ -45,24 +44,28 @@ public class DexDbService : BaseDbService, IDexDbService
 
     private async Task<IEnumerable<Order>> QueryOrdersAsync(string containerId, QueryDefinition query)
     {
-        var database = await this.GetDatabaseAsync();
-        var container = database.GetContainer(containerId);
+        var container = await GetContainerAsync(containerId);
 
         return await this.ExecuteReadQueryAsync<Order>(query, container);
     }
 
     public async Task<Order> UpsertOrderAsync(Order order, string containerId)
     {
-        var database = await this.GetDatabaseAsync();
-
-        var container = await database.CreateContainerIfNotExistsAsync(new ContainerProperties()
-        {
-            Id = containerId,
-            PartitionKeyPath = "/currencyPair"
-        });
+        var container = await GetContainerAsync(containerId);
 
         var result = await container.Container.UpsertItemAsync(order);
 
         return result.Resource;
+    }
+
+    private async Task<ContainerResponse> GetContainerAsync(string containerId)
+    {
+        var database = await this.GetDatabaseAsync();
+
+        return await database.CreateContainerIfNotExistsAsync(new ContainerProperties()
+        {
+            Id = containerId,
+            PartitionKeyPath = "/currencyPair"
+        });
     }
 }

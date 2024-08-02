@@ -25,7 +25,7 @@ public class AddDexOrder
     }
 
     [FunctionName("AddDexOrder")]
-    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req)
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req)
     {
         var order = await this.httpService.GetRequestBody<NewOrder>(req) ?? throw new ArgumentException("\"order\" is missing");
         var azureUserId = this.authService.GetUserId(req);
@@ -42,7 +42,6 @@ public class AddDexOrder
         {
             return new BadRequestObjectResult(ex.Message);
         }
-
     }
 }
 
