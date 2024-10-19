@@ -15,11 +15,13 @@ namespace Gate
     {
         private readonly IGateDbService gateDbService;
         private readonly IAuthService authService;
+        private readonly IDexDbService dexDbService;
 
-        public GetAverages(IGateDbService gateDbService, IAuthService authService)
+        public GetAverages(IGateDbService gateDbService, IAuthService authService, IDexDbService dexDbService)
         {
             this.gateDbService = gateDbService;
             this.authService = authService;
+            this.dexDbService = dexDbService;
         }
 
         [FunctionName("GetAverages")]
@@ -27,9 +29,10 @@ namespace Gate
         {
             var azureUserId = this.authService.GetUserId(req);
 
-            var rawAverages = await this.gateDbService.GetAveragesAsync(azureUserId);
+            var rawCexAverages = await this.gateDbService.GetAveragesAsync(azureUserId);
+            var rawDexAverages = await this.dexDbService.GetAveragesAsync(azureUserId, "gate");
 
-            var body = rawAverages.Aggregate(
+            var body = rawCexAverages.Concat(rawDexAverages).Aggregate(
                 new Dictionary<string, Average>(),
                 (acc, curr) =>
                 {

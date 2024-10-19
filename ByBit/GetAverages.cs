@@ -9,55 +9,55 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 
-namespace ByBit
+namespace ByBit;
+
+public class GetAverages
 {
-    public class GetAverages
+    private readonly IByBitDbService bybitDbService;
+    private readonly IAuthService authService;
+    private readonly IDexDbService dexDbService;
+
+    public GetAverages(IByBitDbService bybitDbService, IAuthService authService, IDexDbService dexDbService)
     {
-        private readonly IByBitDbService bybitDbService;
-        private readonly IAuthService authService;
+        this.bybitDbService = bybitDbService;
+        this.authService = authService;
+        this.dexDbService = dexDbService;
+    }
 
-        public GetAverages(IByBitDbService bybitDbService, IAuthService authService)
-        {
-            this.bybitDbService = bybitDbService;
-            this.authService = authService;
-        }
+    [FunctionName("GetAverages")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
+    {
+        var azureUserId = this.authService.GetUserId(req);
 
-        [FunctionName("GetAverages")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-        {
-            var azureUserId = this.authService.GetUserId(req);
+        var rawCexAverages = await this.bybitDbService.GetAveragesAsync(azureUserId);
+        var rawDexAverages = await this.dexDbService.GetAveragesAsync(azureUserId, "binance");
 
-            var rawAverages = await this.bybitDbService.GetAveragesAsync(azureUserId);
-
-            var body = rawAverages.Aggregate(
-                new Dictionary<string, Average>(),
-                (acc, curr) =>
+        var body = rawCexAverages.Concat(rawDexAverages).Aggregate(
+            new Dictionary<string, Average>(),
+            (acc, curr) =>
+            {
+                if (!acc.TryGetValue(curr.currency_pair, out Average average))
                 {
-                    Average average;
-
-                    if (!acc.TryGetValue(curr.currency_pair, out average))
+                    average = new Average()
                     {
-                        average = new Average()
-                        {
-                            buy = new AverageSide() { money = 0, price = 0, volume = 0 },
-                            sell = new AverageSide() { money = 0, price = 0, volume = 0 },
-                        };
+                        buy = new AverageSide() { money = 0, price = 0, volume = 0 },
+                        sell = new AverageSide() { money = 0, price = 0, volume = 0 },
+                    };
 
-                        acc.Add(curr.currency_pair, average);
-                    }
+                    acc.Add(curr.currency_pair, average);
+                }
 
-                    var side = curr.side.ToUpper() == "BUY" ? average.buy : average.sell;
+                var side = curr.side.ToUpper() == "BUY" ? average.buy : average.sell;
 
-                    side.money = curr.total_money;
-                    side.volume = curr.total_volume;
-                    side.price = curr.total_money / curr.total_volume;
+                side.money = curr.total_money;
+                side.volume = curr.total_volume;
+                side.price = curr.total_money / curr.total_volume;
 
-                    return acc;
-                });
+                return acc;
+            });
 
 
-            return new OkObjectResult(body);
-        }
+        return new OkObjectResult(body);
     }
 }
 

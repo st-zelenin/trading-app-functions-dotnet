@@ -5,7 +5,7 @@ namespace DataAccess.Interfaces;
 
 public interface IGateDbService
 {
-    Task<IEnumerable<GateAverage>> GetAveragesAsync(string containerId);
+    Task<IEnumerable<CryptoAverage>> GetAveragesAsync(string containerId);
     Task<IEnumerable<GateOrder>> GetFilledOrdersAsync(string pair, string containerId);
     Task<IEnumerable<GateOrder>> GetOrdersAsync(string pair, string containerId);
     Task<IEnumerable<GateOrder>> GetOrdersBySide(string side, int limit, string containerId);

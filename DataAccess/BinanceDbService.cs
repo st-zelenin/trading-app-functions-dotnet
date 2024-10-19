@@ -12,7 +12,7 @@ namespace DataAccess
         {
         }
 
-        public async Task<IEnumerable<BinanceAverage>> GetAveragesAsync(string containerId)
+        public async Task<IEnumerable<CryptoAverage>> GetAveragesAsync(string containerId)
         {
             var query =
                 "SELECT SUM(StringToNumber(c.cummulativeQuoteQty)) AS total_money, SUM(StringToNumber(c.executedQty)) AS total_volume, c.side, c.symbol AS currency_pair FROM c WHERE c.status = 'FILLED' GROUP BY c.side, c.symbol";
@@ -20,7 +20,7 @@ namespace DataAccess
             var database = await this.GetDatabaseAsync();
             var container = database.GetContainer(containerId);
 
-            return await this.ExecuteReadQueryAsync<BinanceAverage>(query, container);
+            return await this.ExecuteReadQueryAsync<CryptoAverage>(query, container);
         }
 
         public Task<IEnumerable<BinanceOrder>> GetFilledOrdersAsync(string pair, string containerId)

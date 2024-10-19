@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
 using DataAccess.Interfaces;
@@ -14,17 +15,23 @@ namespace Gate;
 public class GetHistory
 {
     private readonly IGateDbService gateDbService;
+    private readonly IDexDbService dexDbService;
+    private readonly IDexService dexService;
     private readonly IAuthService authService;
     private readonly ITradeHistoryService tradeHistoryService;
     private readonly IHttpService httpService;
 
     public GetHistory(
         IGateDbService cryptoDbService,
+        IDexDbService dexDbService,
+        IDexService dexService,
         IAuthService authService,
         ITradeHistoryService tradeHistoryService,
         IHttpService httpService)
     {
         this.gateDbService = cryptoDbService;
+        this.dexDbService = dexDbService;
+        this.dexService = dexService;
         this.authService = authService;
         this.tradeHistoryService = tradeHistoryService;
         this.httpService = httpService;
@@ -37,13 +44,22 @@ public class GetHistory
 
         var azureUserId = this.authService.GetUserId(req);
 
-        await this.tradeHistoryService.UpdateRecentTradeHistory(pair, azureUserId);
+        try
+        {
+            await this.tradeHistoryService.UpdateRecentTradeHistory(pair, azureUserId);
 
-        var orders = await this.gateDbService.GetOrdersAsync(pair, azureUserId);
+            var orders = await this.gateDbService.GetOrdersAsync(pair, azureUserId);
+            var cexOrders = orders.Where(o => o.status == GateOrderStatus.closed).Select(o => o.ToCommonOrder());
 
-        var body = orders.Where(o => o.status == GateOrderStatus.closed).Select(o => o.ToCommonOrder());
+            var dexOrders = await this.dexDbService.GetOrdersAsync(pair, azureUserId, "binance");
 
-        return new OkObjectResult(body);
+            var body = this.dexService.CombineCexWithDexOrders(cexOrders, dexOrders);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

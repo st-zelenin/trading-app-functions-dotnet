@@ -12,7 +12,7 @@ public class ByBitDbService : BaseDbService, IByBitDbService
     {
     }
 
-    public async Task<IEnumerable<ByBitAverage>> GetAveragesAsync(string containerId)
+    public async Task<IEnumerable<CryptoAverage>> GetAveragesAsync(string containerId)
     {
         var query =
           "SELECT SUM(c.type = 'MARKET' ? (StringToNumber(c.executedQty) * StringToNumber(c.avgPrice)) : StringToNumber(c.cummulativeQuoteQty)) AS total_money, SUM(StringToNumber(c.executedQty)) AS total_volume, c.side, c.symbol AS currency_pair FROM c WHERE c.status = 'FILLED' OR c.status = 'PARTIALLY_FILLED' GROUP BY c.side, c.symbol";
@@ -20,7 +20,7 @@ public class ByBitDbService : BaseDbService, IByBitDbService
         var database = await this.GetDatabaseAsync();
         var container = database.GetContainer(containerId);
 
-        return await this.ExecuteReadQueryAsync<ByBitAverage>(query, container);
+        return await this.ExecuteReadQueryAsync<CryptoAverage>(query, container);
     }
 
     public Task<IEnumerable<ByBitOrder>> GetFilledOrdersAsync(string pair, string containerId)

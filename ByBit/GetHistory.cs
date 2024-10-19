@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using ByBit.Interfaces;
 using Common.Interfaces;
@@ -14,17 +15,23 @@ namespace ByBit;
 public class GetHistory
 {
     private readonly IByBitDbService bybitDbService;
+    private readonly IDexDbService dexDbService;
+    private readonly IDexService dexService;
     private readonly IAuthService authService;
     private readonly ITradeHistoryService tradeHistoryService;
     private readonly IHttpService httpService;
 
     public GetHistory(
         IByBitDbService bybitDbService,
+        IDexDbService dexDbService,
+        IDexService dexService,
         IAuthService authService,
         ITradeHistoryService tradeHistoryService,
         IHttpService httpService)
     {
         this.bybitDbService = bybitDbService;
+        this.dexDbService = dexDbService;
+        this.dexService = dexService;
         this.authService = authService;
         this.tradeHistoryService = tradeHistoryService;
         this.httpService = httpService;
@@ -38,13 +45,22 @@ public class GetHistory
 
         var azureUserId = this.authService.GetUserId(req);
 
-        await this.tradeHistoryService.UpdateRecentTradeHistoryAsync(pair, azureUserId);
+        try
+        {
+            await this.tradeHistoryService.UpdateRecentTradeHistoryAsync(pair, azureUserId);
 
-        var orders = await this.bybitDbService.GetOrdersAsync(pair, azureUserId);
+            var orders = await this.bybitDbService.GetOrdersAsync(pair, azureUserId);
+            var cexOrders = orders.Where(o => o.status == ByBitOrderStatus.FILLED || o.status == ByBitOrderStatus.PARTIALLY_FILLED).Select(o => o.ToCommonOrder());
 
-        var body = orders.Where(o => o.status == ByBitOrderStatus.FILLED || o.status == ByBitOrderStatus.PARTIALLY_FILLED).Select(o => o.ToCommonOrder());
+            var dexOrders = await this.dexDbService.GetOrdersAsync(pair, azureUserId, "binance");
 
-        return new OkObjectResult(body);
+            var body = this.dexService.CombineCexWithDexOrders(cexOrders, dexOrders);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

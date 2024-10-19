@@ -8,8 +8,6 @@ using DataAccess.Interfaces;
 using Binance.Interfaces;
 using System.Linq;
 using System;
-using System.Collections.Generic;
-using Common.Models;
 
 namespace Binance;
 
@@ -17,6 +15,7 @@ public class GetHistory
 {
     private readonly IBinanceDbService binanceDbService;
     private readonly IDexDbService dexDbService;
+    private readonly IDexService dexService;
     private readonly IAuthService authService;
     private readonly ITradeHistoryService tradeHistoryService;
     private readonly IHttpService httpService;
@@ -24,12 +23,14 @@ public class GetHistory
     public GetHistory(
         IBinanceDbService binanceDbService,
         IDexDbService dexDbService,
+        IDexService dexService,
         IAuthService authService,
         ITradeHistoryService tradeHistoryService,
         IHttpService httpService)
     {
         this.binanceDbService = binanceDbService;
         this.dexDbService = dexDbService;
+        this.dexService = dexService;
         this.authService = authService;
         this.tradeHistoryService = tradeHistoryService;
         this.httpService = httpService;
@@ -51,31 +52,8 @@ public class GetHistory
             var cexOrders = orders.Select(o => o.ToCommonOrder());
 
             var dexOrders = await this.dexDbService.GetOrdersAsync(pair, azureUserId, "binance");
-            var dexOrdersArr = dexOrders.ToArray();
 
-            var body = new List<Order>();
-            var dexIndex = 0;
-
-            foreach (var cexOrder in cexOrders)
-            {
-                while (dexOrdersArr.Length > dexIndex && dexOrdersArr[dexIndex].updateTimestamp > cexOrder.updateTimestamp)
-                {
-                    body.Add(dexOrdersArr[dexIndex]);
-                    dexIndex++;
-                }
-
-
-                body.Add(cexOrder);
-            }
-
-            if (dexIndex < dexOrdersArr.Length)
-            {
-                for (var i = dexIndex; i < dexOrdersArr.Length; i++)
-                {
-                    body.Add(dexOrdersArr[i]);
-                }
-            }
-
+            var body = this.dexService.CombineCexWithDexOrders(cexOrders, dexOrders);
             return new OkObjectResult(body);
         }
         catch (Exception ex)

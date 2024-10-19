@@ -1,12 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Common.Interfaces;
 using Common.Models;
 using DataAccess.Interfaces;
@@ -34,9 +30,9 @@ public class GetAverages
         var azureUserId = this.authService.GetUserId(req);
 
         var rawCexAverages = await this.binanceDbService.GetAveragesAsync(azureUserId);
-        var rawDexverages = await this.dexDbService.GetAveragesAsync(azureUserId, "binance");
+        var rawDexAverages = await this.dexDbService.GetAveragesAsync(azureUserId, "binance");
 
-        var body = rawCexAverages.Concat(rawDexverages).Aggregate(
+        var body = rawCexAverages.Concat(rawDexAverages).Aggregate(
             new Dictionary<string, Average>(),
             (acc, curr) =>
             {

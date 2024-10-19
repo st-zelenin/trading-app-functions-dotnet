@@ -4,7 +4,7 @@ namespace DataAccess.Interfaces;
 
 public interface IByBitDbService
 {
-    Task<IEnumerable<ByBitAverage>> GetAveragesAsync(string containerId);
+    Task<IEnumerable<CryptoAverage>> GetAveragesAsync(string containerId);
     Task<IEnumerable<ByBitOrder>> GetFilledOrdersAsync(string pair, string containerId);
     Task<IEnumerable<ByBitOrder>> GetOrdersAsync(string pair, string containerId);
     Task<IEnumerable<ByBitOrder>> GetOrdersBySide(string side, int limit, string containerId);

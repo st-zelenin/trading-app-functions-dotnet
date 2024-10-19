@@ -5,56 +5,60 @@ using Crypto.Interfaces;
 using Crypto.Models;
 using DataAccess.Interfaces;
 
-namespace Crypto.Services
+namespace Crypto.Services;
+
+public class TradeHistoryService : ITradeHistoryService
 {
-    public class TradeHistoryService : ITradeHistoryService
+    private readonly ICryptoDbService cryptoDbService;
+    private readonly IHttpService httpService;
+
+    public int historyHoursDiff { get; private set; }
+
+    public TradeHistoryService(ICryptoDbService cryptoDbService, IHttpService httpService)
     {
-        private readonly ICryptoDbService cryptoDbService;
-        private readonly IHttpService httpService;
+        this.cryptoDbService = cryptoDbService;
+        this.httpService = httpService;
+        this.historyHoursDiff = -23;
+    }
 
-        public int historyHoursDiff { get; private set; }
+    public Task UpdateRecentTradeHistory(string azureUserId)
+    {
+        return this.ImportPeriodTradeHistory(DateTime.Now, DateTime.Now.AddHours(this.historyHoursDiff), azureUserId);
+    }
 
-        public TradeHistoryService(ICryptoDbService cryptoDbService, IHttpService httpService)
+    public async Task ImportPeriodTradeHistory(DateTime end, DateTime start, string azureUserId)
+    {
+        var data = new ImportPeriodTradeHistoryRequestData()
         {
-            this.cryptoDbService = cryptoDbService;
-            this.httpService = httpService;
-            this.historyHoursDiff = -23;
+            end_ts = new DateTimeOffset(end).ToUnixTimeMilliseconds(),
+            start_ts = new DateTimeOffset(start).ToUnixTimeMilliseconds()
+        };
+
+        var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, ImportPeriodTradeHistoryRequestData>
+            ("private/get-order-history", data);
+
+        if (response.result.order_list.Count() <= 0)
+        {
+            return;
         }
 
-        public Task UpdateRecentTradeHistory(string azureUserId)
+        var filledOrders = response.result.order_list.Where(o => o.status == DataAccess.Models.CryptoOrderStatus.FILLED);
+        if (filledOrders.Count() == 0)
         {
-            return this.ImportPeriodTradeHistory(DateTime.Now, DateTime.Now.AddHours(this.historyHoursDiff), azureUserId);
+            return;
         }
 
-        public async Task ImportPeriodTradeHistory(DateTime end, DateTime start, string azureUserId)
+        foreach (var filledOrder in filledOrders)
         {
-            var data = new ImportPeriodTradeHistoryRequestData()
-            {
-                end_ts = new DateTimeOffset(end).ToUnixTimeMilliseconds(),
-                start_ts = new DateTimeOffset(start).ToUnixTimeMilliseconds()
-            };
-
-            var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, ImportPeriodTradeHistoryRequestData>
-                ("private/get-order-history", data);
-
-            if (response.result.order_list.Count() <= 0)
-            {
-                return;
-            }
-
-            var filledOrders = response.result.order_list.Where(o => o.status == DataAccess.Models.CryptoOrderStatus.FILLED);
-            if (filledOrders.Count() == 0)
-            {
-                return;
-            }
-
-            foreach (var filledOrder in filledOrders)
-            {
-                filledOrder.id = filledOrder.order_id;
-            }
-
-            await this.cryptoDbService.UpsertOrdersAsync(filledOrders, azureUserId);
+            filledOrder.id = filledOrder.order_id;
         }
+
+        await this.cryptoDbService.UpsertOrdersAsync(filledOrders, azureUserId);
     }
 }
 
+internal class ImportPeriodTradeHistoryRequestData
+{
+public long start_ts { get; set; }
+public long end_ts { get; set; }
+}
