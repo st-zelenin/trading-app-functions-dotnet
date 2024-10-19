@@ -1,4 +1,4 @@
-﻿namespace DataAccess.Models;
+﻿namespace Common.Models;
 
 public class CryptoAverage
 {

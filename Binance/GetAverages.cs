@@ -4,10 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Common.Interfaces;
-using Common.Models;
 using DataAccess.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Binance;
 
@@ -16,12 +13,14 @@ public class GetAverages
     private readonly IAuthService authService;
     private readonly IBinanceDbService binanceDbService;
     private readonly IDexDbService dexDbService;
+    private readonly IDexService dexService;
 
-    public GetAverages(IAuthService authService, IBinanceDbService binanceDbService, IDexDbService dexDbService)
+    public GetAverages(IAuthService authService, IBinanceDbService binanceDbService, IDexDbService dexDbService, IDexService dexService)
     {
         this.authService = authService;
         this.binanceDbService = binanceDbService;
         this.dexDbService = dexDbService;
+        this.dexService = dexService;
     }
 
     [FunctionName("GetAverages")]
@@ -32,30 +31,7 @@ public class GetAverages
         var rawCexAverages = await this.binanceDbService.GetAveragesAsync(azureUserId);
         var rawDexAverages = await this.dexDbService.GetAveragesAsync(azureUserId, "binance");
 
-        var body = rawCexAverages.Concat(rawDexAverages).Aggregate(
-            new Dictionary<string, Average>(),
-            (acc, curr) =>
-            {
-                if (!acc.TryGetValue(curr.currency_pair, out Average average))
-                {
-                    average = new Average()
-                    {
-                        buy = new AverageSide() { money = 0, price = 0, volume = 0 },
-                        sell = new AverageSide() { money = 0, price = 0, volume = 0 },
-                    };
-
-                    acc.Add(curr.currency_pair, average);
-                }
-
-                var side = curr.side.ToLower() == "buy" ? average.buy : average.sell;
-
-                side.money += curr.total_money;
-                side.volume += curr.total_volume;
-                side.price = side.money / side.volume;
-
-                return acc;
-            });
-
+        var body = this.dexService.CombineCexWithDexAverages(rawCexAverages, rawDexAverages);
 
         return new OkObjectResult(body);
     }

@@ -22,14 +22,14 @@ public class GetHistory
     private readonly IHttpService httpService;
 
     public GetHistory(
-        IGateDbService cryptoDbService,
+        IGateDbService gateDbService,
         IDexDbService dexDbService,
         IDexService dexService,
         IAuthService authService,
         ITradeHistoryService tradeHistoryService,
         IHttpService httpService)
     {
-        this.gateDbService = cryptoDbService;
+        this.gateDbService = gateDbService;
         this.dexDbService = dexDbService;
         this.dexService = dexService;
         this.authService = authService;
@@ -51,7 +51,7 @@ public class GetHistory
             var orders = await this.gateDbService.GetOrdersAsync(pair, azureUserId);
             var cexOrders = orders.Where(o => o.status == GateOrderStatus.closed).Select(o => o.ToCommonOrder());
 
-            var dexOrders = await this.dexDbService.GetOrdersAsync(pair, azureUserId, "binance");
+            var dexOrders = await this.dexDbService.GetOrdersAsync(pair, azureUserId, "gate");
 
             var body = this.dexService.CombineCexWithDexOrders(cexOrders, dexOrders);
             return new OkObjectResult(body);

@@ -52,7 +52,7 @@ public class GetHistory
             var orders = await this.bybitDbService.GetOrdersAsync(pair, azureUserId);
             var cexOrders = orders.Where(o => o.status == ByBitOrderStatus.FILLED || o.status == ByBitOrderStatus.PARTIALLY_FILLED).Select(o => o.ToCommonOrder());
 
-            var dexOrders = await this.dexDbService.GetOrdersAsync(pair, azureUserId, "binance");
+            var dexOrders = await this.dexDbService.GetOrdersAsync(pair, azureUserId, "bybit");
 
             var body = this.dexService.CombineCexWithDexOrders(cexOrders, dexOrders);
             return new OkObjectResult(body);

@@ -1,4 +1,5 @@
-﻿using DataAccess.Models;
+﻿using Common.Models;
+using DataAccess.Models;
 
 namespace DataAccess.Interfaces;
 

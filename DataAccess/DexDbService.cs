@@ -17,8 +17,8 @@ public class DexDbService : BaseDbService, IDexDbService
     {
         var container = await GetContainerAsync(containerId);
 
-        var query =
-            "SELECT SUM(c.amount * c.price) AS total_money, SUM(c.amount) AS total_volume, c.side, c.currencyPair AS currency_pair FROM c GROUP BY c.side, c.currencyPair";
+        var query = new QueryDefinition("SELECT SUM(c.amount * c.price) AS total_money, SUM(c.amount) AS total_volume, c.side, c.currencyPair AS currency_pair FROM c WHERE c.associatedCex = @associatedCex GROUP BY c.side, c.currencyPair")
+            .WithParameter("@associatedCex", associatedCex);
 
         return await this.ExecuteReadQueryAsync<CryptoAverage>(query, container);
     }
