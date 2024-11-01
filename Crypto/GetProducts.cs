@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
@@ -38,22 +39,29 @@ public class GetProducts
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");
+        try
+        {
+            var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");
 
-        var body = user.crypto.Aggregate(
-            new Dictionary<string, Common.Models.Product>(),
-            (acc, pair) =>
-            {
-                var raw = instruments.result.data.FirstOrDefault(x => x.symbol == pair.symbol);
-                if (raw != null)
+            var body = user.crypto.Aggregate(
+                new Dictionary<string, Common.Models.Product>(),
+                (acc, pair) =>
                 {
-                    acc.Add(pair.symbol, raw.ToCommonProduct());
-                }
+                    var raw = instruments.result.data.FirstOrDefault(x => x.symbol == pair.symbol);
+                    if (raw != null)
+                    {
+                        acc.Add(pair.symbol, raw.ToCommonProduct());
+                    }
 
-                return acc;
-            });
+                    return acc;
+                });
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
@@ -33,17 +34,24 @@ public class GetBalances
     {
         this.authService.ValidateUser(req);
 
-        var response = await this.httpService.PostAsync<ResponseWithResult<BalancesResponseResult>>("private/user-balance");
+        try
+        {
+            var response = await this.httpService.PostAsync<ResponseWithResult<BalancesResponseResult>>("private/user-balance");
 
-        var body = response.result.data.First().position_balances.Aggregate(
-            new Dictionary<string, CommonBalance>(),
-            (acc, raw) =>
-            {
-                acc.Add(raw.instrument_name, raw.ToCommonBalance());
-                return acc;
-            });
+            var body = response.result.data.First().position_balances.Aggregate(
+                new Dictionary<string, CommonBalance>(),
+                (acc, raw) =>
+                {
+                    acc.Add(raw.instrument_name, raw.ToCommonBalance());
+                    return acc;
+                });
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

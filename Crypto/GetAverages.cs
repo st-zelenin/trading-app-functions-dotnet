@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Common.Interfaces;
 using DataAccess.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -28,12 +29,19 @@ public class GetAverages
     {
         var azureUserId = this.authService.GetUserId(req);
 
-        var rawCexAverages = await this.cryptoDbService.GetAveragesAsync(azureUserId);
-        var rawDexAverages = await this.dexDbService.GetAveragesAsync(azureUserId, "crypto");
+        try
+        {
+            var rawCexAverages = await this.cryptoDbService.GetAveragesAsync(azureUserId);
+            var rawDexAverages = await this.dexDbService.GetAveragesAsync(azureUserId, "crypto");
 
-        var body = this.dexService.CombineCexWithDexAverages(rawCexAverages, rawDexAverages);
+            var body = this.dexService.CombineCexWithDexAverages(rawCexAverages, rawDexAverages);
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

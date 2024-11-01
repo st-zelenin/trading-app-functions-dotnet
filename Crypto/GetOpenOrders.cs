@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
@@ -11,30 +12,32 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using CommonOrder = Common.Models.Order;
 
-namespace Crypto
-{
+namespace Crypto;
 
-    internal class OrdersResponseResult
+
+internal class OrdersResponseResult
+{
+    public IEnumerable<CryptoOrder> data { get; set; }
+}
+
+public class GetOpenOrders
+{
+    private readonly IAuthService authService;
+    private readonly IHttpService httpService;
+
+    public GetOpenOrders(IAuthService authService, IHttpService httpService)
     {
-        public IEnumerable<CryptoOrder> data { get; set; }
+        this.authService = authService;
+        this.httpService = httpService;
     }
 
-    public class GetOpenOrders
+    [FunctionName("GetOpenOrders")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
-        private readonly IAuthService authService;
-        private readonly IHttpService httpService;
+        this.authService.ValidateUser(req);
 
-        public GetOpenOrders(IAuthService authService, IHttpService httpService)
+        try
         {
-            this.authService = authService;
-            this.httpService = httpService;
-        }
-
-        [FunctionName("GetOpenOrders")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-        {
-            this.authService.ValidateUser(req);
-
             var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>>("private/get-open-orders");
 
             var body = response.result.data.Aggregate(
@@ -56,6 +59,10 @@ namespace Crypto
 
 
             return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
         }
     }
 }
