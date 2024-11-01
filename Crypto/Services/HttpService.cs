@@ -102,7 +102,7 @@ namespace Crypto.Services
 
 
             var response = await client.PostAsync(path, new StringContent(jsonString, Encoding.UTF8, MediaTypeNames.Application.Json));
-            //response.EnsureSuccessStatusCode();
+
             string content = await response.Content.ReadAsStringAsync();
 
             if (content.Equals("Too Many Requests"))
@@ -113,7 +113,7 @@ namespace Crypto.Services
             if (!response.IsSuccessStatusCode)
             {
                 log.LogError($"request failed: {content}");
-                throw new HttpRequestException($"\"POST\" to \"{path}\" failed with code \"{response.StatusCode}\"");
+                throw new HttpRequestException($"POST to \"{path}\" failed: {content}");
             }
 
             log.LogInformation($"\"POST\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");
@@ -124,8 +124,14 @@ namespace Crypto.Services
         public async Task<TRes> GetAsync<TRes>(string path)
         {
             var response = await this.client.GetAsync(path);
-            //response.EnsureSuccessStatusCode();
+
             string content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                log.LogError($"request failed: {content}");
+                throw new HttpRequestException($"GET to \"{path}\" failed: {content}");
+            }
 
             return JsonConvert.DeserializeObject<TRes>(content);
         }

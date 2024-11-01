@@ -13,17 +13,10 @@ using CommonOrder = Common.Models.Order;
 
 namespace Crypto
 {
-    internal class GetOpenOrdersRequestBody
-    {
-        public int page_size { get; set; }
-        public int page { get; set; }
-    }
 
     internal class OrdersResponseResult
     {
-        public IEnumerable<CryptoOrder> order_list { get; set; }
-
-        public long count { get; set; }
+        public IEnumerable<CryptoOrder> data { get; set; }
     }
 
     public class GetOpenOrders
@@ -42,22 +35,9 @@ namespace Crypto
         {
             this.authService.ValidateUser(req);
 
-            List<CryptoOrder> orders = new();
-            var page = 0;
-            var done = false;
+            var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>>("private/get-open-orders");
 
-            do
-            {
-                var requestBody = new GetOpenOrdersRequestBody() { page_size = 100, page = page };
-                var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, GetOpenOrdersRequestBody>("private/get-open-orders", requestBody);
-
-                orders.AddRange(response.result.order_list);
-                done = orders.Count >= response.result.count;
-                page++;
-            } while (!done);
-
-
-            var body = orders.Aggregate(
+            var body = response.result.data.Aggregate(
                 new Dictionary<string, List<CommonOrder>>(),
                 (acc, raw) =>
                 {

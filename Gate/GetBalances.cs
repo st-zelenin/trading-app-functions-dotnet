@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
@@ -33,17 +34,24 @@ namespace Gate
         {
             this.authService.ValidateUser(req);
 
-            var response = await this.httpService.GetAsync<IEnumerable<Balance>>("/spot/accounts");
+            try
+            {
+                var response = await this.httpService.GetAsync<IEnumerable<Balance>>("/spot/accounts");
 
-            var body = response.Aggregate(
-                new Dictionary<string, CommonBalance>(),
-                (acc, raw) =>
-                {
-                    acc.Add(raw.currency, raw.ToCommonBalance());
-                    return acc;
-                });
+                var body = response.Aggregate(
+                    new Dictionary<string, CommonBalance>(),
+                    (acc, raw) =>
+                    {
+                        acc.Add(raw.currency, raw.ToCommonBalance());
+                        return acc;
+                    });
 
-            return new OkObjectResult(body);
+                return new OkObjectResult(body);
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult(ex.Message);
+            }
         }
     }
 }

@@ -21,11 +21,11 @@ public class Startup : FunctionsStartup
         builder.Services.AddSingleton<IEnvironmentVariableService, EnvironmentVariableService>();
         builder.Services.AddSingleton<IAuthService, AuthService>();
         builder.Services.AddSingleton<ISecretsService, SecretsService>();
+        builder.Services.AddSingleton<ITradingDbService, TradingDbService>();
+        builder.Services.AddSingleton<IBinanceDbService, BinanceDbService>();
+        builder.Services.AddSingleton<ITradeHistoryService, TradeHistoryService>();
+        builder.Services.AddSingleton<IDexDbService, DexDbService>();
 
-        builder.Services.AddScoped<ITradingDbService, TradingDbService>();
-        builder.Services.AddScoped<IBinanceDbService, BinanceDbService>();
-        builder.Services.AddScoped<ITradeHistoryService, TradeHistoryService>();
-        builder.Services.AddScoped<IDexDbService, DexDbService>();
         builder.Services.AddScoped<IDexService, DexService>();
 
         builder.Services.AddTransient<IHttpService, HttpService>();

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
@@ -31,22 +32,29 @@ public class GetTickers
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var tickers = await this.httpService.GetAsync<IEnumerable<Ticker>>("/spot/tickers");
+        try
+        {
+            var tickers = await this.httpService.GetAsync<IEnumerable<Ticker>>("/spot/tickers");
 
-        var body = user.gate.Aggregate(
-            new Dictionary<string, Common.Models.Ticker>(),
-            (acc, pair) =>
-            {
-                var raw = tickers.FirstOrDefault(x => x.currency_pair == pair.symbol);
-                if (raw != null)
+            var body = user.gate.Aggregate(
+                new Dictionary<string, Common.Models.Ticker>(),
+                (acc, pair) =>
                 {
-                    acc.Add(pair.symbol, raw.ToCommonTicker());
-                }
+                    var raw = tickers.FirstOrDefault(x => x.currency_pair == pair.symbol);
+                    if (raw != null)
+                    {
+                        acc.Add(pair.symbol, raw.ToCommonTicker());
+                    }
 
-                return acc;
-            });
+                    return acc;
+                });
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

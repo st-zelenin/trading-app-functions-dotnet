@@ -18,15 +18,15 @@ namespace Crypto.Models
     {
         public NewLimitOrder() : base(CryptoOrderType.LIMIT) { }
 
-        public double price { get; set; }
-        public double quantity { get; set; }
+        public string price { get; set; }
+        public string quantity { get; set; }
     }
 
     public class NewMarketOrder : BaseNewOrder
     {
         public NewMarketOrder() : base(CryptoOrderType.MARKET) { }
 
-        public double? quantity { get; set; }
-        public double? notional { get; set; }
+        public string? quantity { get; set; }
+        public string? notional { get; set; }
     }
 }

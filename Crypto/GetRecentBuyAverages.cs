@@ -52,8 +52,8 @@ public class GetRecentBuyAverages
             new AverageSide() { money = 0, price = 0, volume = 0 },
             (acc, curr) =>
             {
-                acc.money += curr.cumulative_value;
-                acc.volume += curr.cumulative_quantity;
+                acc.money += double.Parse(curr.cumulative_value);
+                acc.volume += double.Parse(curr.cumulative_quantity);
                 acc.price = acc.money / acc.volume;
 
                 return acc;

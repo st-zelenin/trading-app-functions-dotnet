@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
 using DataAccess.Interfaces;
@@ -42,18 +43,25 @@ public class GetRecentTradeHistory
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        //foreach(var pair in user.pairs)
-        //{
-        //    await this.tradeHistoryService.ImportTradeHistoryAsync(pair, azureUserId);
-        //}
+        try
+        {
+            //foreach(var pair in user.pairs)
+            //{
+            //    await this.tradeHistoryService.ImportTradeHistoryAsync(pair, azureUserId);
+            //}
 
-        await Task.WhenAll(user.gate.Select(p => this.tradeHistoryService.UpdateRecentTradeHistory(p.symbol, azureUserId)));
+            await Task.WhenAll(user.gate.Select(p => this.tradeHistoryService.UpdateRecentTradeHistory(p.symbol, azureUserId)));
 
-        var orders = await this.gateDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);
+            var orders = await this.gateDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);
 
-        var body = orders.Select(o => o.ToCommonOrder());
+            var body = orders.Select(o => o.ToCommonOrder());
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

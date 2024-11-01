@@ -14,7 +14,7 @@ namespace Crypto;
 
 internal class BalancesResponseResult
 {
-    public IEnumerable<Balance> accounts { get; set; }
+    public IEnumerable<Balance> data { get; set; }
 }
 
 public class GetBalances
@@ -33,13 +33,13 @@ public class GetBalances
     {
         this.authService.ValidateUser(req);
 
-        var response = await this.httpService.PostAsync<ResponseWithResult<BalancesResponseResult>>("private/get-account-summary");
+        var response = await this.httpService.PostAsync<ResponseWithResult<BalancesResponseResult>>("private/user-balance");
 
-        var body = response.result.accounts.Aggregate(
+        var body = response.result.data.First().position_balances.Aggregate(
             new Dictionary<string, CommonBalance>(),
             (acc, raw) =>
             {
-                acc.Add(raw.currency, raw.ToCommonBalance());
+                acc.Add(raw.instrument_name, raw.ToCommonBalance());
                 return acc;
             });
 

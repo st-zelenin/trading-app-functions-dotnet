@@ -34,36 +34,43 @@ public class CreateOrder
         var order = await this.httpService.GetRequestBody<NewOrder>(req) ?? throw new ArgumentException("\"order\" is missing");
         this.authService.ValidateUser(req);
 
-        if (order.market == true)
+        try
         {
-            return await this.CreateMarketOrder(order);
-        }
+            if (order.market == true)
+            {
+                return await this.CreateMarketOrder(order);
+            }
 
 
-        if (!decimal.TryParse(order.price, out decimal price))
-        {
-            throw new ArgumentException($"unexpected price value: {order.price}");
-        }
+            if (!decimal.TryParse(order.price, out decimal price))
+            {
+                throw new ArgumentException($"unexpected price value: {order.price}");
+            }
 
-        var ticker = await this.httpService.GetAsync<Models.Ticker, SymbolParams>("/api/v3/ticker/24hr", new SymbolParams { symbol = order.currencyPair });
-        var product = await this.GetProductAsync(order.currencyPair);
+            var ticker = await this.httpService.GetAsync<Models.Ticker, SymbolParams>("/api/v3/ticker/24hr", new SymbolParams { symbol = order.currencyPair });
+            var product = await this.GetProductAsync(order.currencyPair);
 
-        if (ticker == null || !decimal.TryParse(ticker.lastPrice, out decimal tickerPrice))
-        {
+            if (ticker == null || !decimal.TryParse(ticker.lastPrice, out decimal tickerPrice))
+            {
+                return await this.CreateLimitOrder(order, price, product);
+            }
+
+            if (order.side == CommonOrderSides.buy && price > tickerPrice)
+            {
+                return await this.CreateMarketOrder(order);
+            }
+
+            if (order.side == CommonOrderSides.sell && price < tickerPrice)
+            {
+                return await this.CreateMarketOrder(order);
+            }
+
             return await this.CreateLimitOrder(order, price, product);
         }
-
-        if (order.side == CommonOrderSides.buy && price > tickerPrice)
+        catch (Exception ex)
         {
-            return await this.CreateMarketOrder(order);
+            return new BadRequestObjectResult(ex.Message);
         }
-
-        if (order.side == CommonOrderSides.sell && price < tickerPrice)
-        {
-            return await this.CreateMarketOrder(order);
-        }
-
-        return await this.CreateLimitOrder(order, price, product);
     }
 
     private async Task<IActionResult> CreateMarketOrder(NewOrder order)

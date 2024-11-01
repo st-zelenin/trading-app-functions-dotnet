@@ -32,17 +32,24 @@ public class GetBalances
     {
         this.authService.ValidateUser(req);
 
-        var response = await this.httpService.PostSignedAsync<IEnumerable<Balance>>("/sapi/v3/asset/getUserAsset");
+        try
+        {
+            var response = await this.httpService.PostSignedAsync<IEnumerable<Balance>>("/sapi/v3/asset/getUserAsset");
 
-        var body = response.Aggregate(
-            new Dictionary<string, CommonBalance>(),
-            (acc, raw) =>
-            {
-                acc.Add(raw.asset, new CommonBalance() { available = double.Parse(raw.free), locked = double.Parse(raw.locked) });
-                return acc;
-            });
+            var body = response.Aggregate(
+                new Dictionary<string, CommonBalance>(),
+                (acc, raw) =>
+                {
+                    acc.Add(raw.asset, new CommonBalance() { available = double.Parse(raw.free), locked = double.Parse(raw.locked) });
+                    return acc;
+                });
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

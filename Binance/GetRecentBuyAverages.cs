@@ -35,13 +35,20 @@ public class GetRecentBuyAverages
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var tasks = user.binance.Select(async pair => new { pair.symbol, averages = await this.AnalyzePairAsync(pair.symbol, azureUserId) }).ToList();
+        try
+        {
+            var tasks = user.binance.Select(async pair => new { pair.symbol, averages = await this.AnalyzePairAsync(pair.symbol, azureUserId) }).ToList();
 
-        var results = await Task.WhenAll(tasks);
+            var results = await Task.WhenAll(tasks);
 
-        var body = results.ToDictionary(result => result.symbol, result => result.averages);
+            var body = results.ToDictionary(result => result.symbol, result => result.averages);
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 
     private async Task<AverageSide> AnalyzePairAsync(string pair, string continerId)

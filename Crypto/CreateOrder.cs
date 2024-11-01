@@ -62,7 +62,7 @@ namespace Crypto
             }
 
             var instruments = await this.httpService.GetAsync<ResponseWithResult<InstrumentsResponseResult>>("public/get-instruments");
-            return instruments.result.instruments.FirstOrDefault((i) => i.instrument_name == name);
+            return instruments.result.data.FirstOrDefault((i) => i.symbol == name);
         }
 
         private NewMarketOrder ToNewMarketOrder(NewOrder order, CryptoOrderSide side, Instrument instrument)
@@ -76,7 +76,7 @@ namespace Crypto
                 {
                     instrument_name = order.currencyPair,
                     side = side,
-                    quantity = Math.Round(amount, instrument.quantity_decimals)
+                    quantity = Math.Round(amount, instrument.quantity_decimals).ToString()
                 };
             }
 
@@ -95,7 +95,7 @@ namespace Crypto
             {
                 instrument_name = order.currencyPair,
                 side = side,
-                notional = total
+                notional = total.ToString()
             };
         }
 
@@ -117,8 +117,8 @@ namespace Crypto
             {
                 instrument_name = order.currencyPair,
                 side = side,
-                price = Math.Round(price, instrument.price_decimals),
-                quantity = Math.Round(amount, instrument.quantity_decimals)
+                price = Math.Round(price, instrument.quote_decimals).ToString(),
+                quantity = Math.Round(amount, instrument.quantity_decimals).ToString()
             };
         }
     }

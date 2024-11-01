@@ -27,11 +27,18 @@ public class GetCurrencyPairs
     [FunctionName("GetCurrencyPairs")]
     public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
-        var exchangeInfo = await this.httpService.GetAsync<ExchangeInfo<BaseProduct>>("/api/v3/exchangeInfo?permissions=SPOT");
+        try
+        {
+            var exchangeInfo = await this.httpService.GetAsync<ExchangeInfo<BaseProduct>>("/api/v3/exchangeInfo?permissions=SPOT");
 
-        var body = exchangeInfo.symbols.Where(s => s.quoteAsset == "USDT" && s.status == "TRADING").Select(s => s.symbol);
+            var body = exchangeInfo.symbols.Where(s => s.quoteAsset == "USDT" && s.status == "TRADING").Select(s => s.symbol);
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
 

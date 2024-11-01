@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
 using Crypto.Interfaces;
@@ -24,13 +25,20 @@ namespace Crypto
         [FunctionName("GetCurrencyPairs")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            this.authService.ValidateUser(req);
+            try
+            {
+                this.authService.ValidateUser(req);
 
-            var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-ticker");
+                var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-tickers1");
 
-            var body = response.result.data.Select(t => t.i);
+                var body = response.result.data.Select(t => t.i);
 
-            return new OkObjectResult(body);
+                return new OkObjectResult(body);
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult(ex.Message);
+            }
         }
     }
 }

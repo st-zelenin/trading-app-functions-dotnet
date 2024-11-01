@@ -20,11 +20,11 @@ public class Startup : FunctionsStartup
         builder.Services.AddSingleton<IEnvironmentVariableService, EnvironmentVariableService>();
         builder.Services.AddSingleton<IAuthService, AuthService>();
         builder.Services.AddSingleton<ISecretsService, SecretsService>();
+        builder.Services.AddSingleton<ITradingDbService, TradingDbService>();
+        builder.Services.AddSingleton<IByBitDbService, ByBitDbService>();
+        builder.Services.AddSingleton<ITradeHistoryService, TradeHistoryService>();
+        builder.Services.AddSingleton<IDexDbService, DexDbService>();
 
-        builder.Services.AddScoped<ITradingDbService, TradingDbService>();
-        builder.Services.AddScoped<IByBitDbService, ByBitDbService>();
-        builder.Services.AddScoped<ITradeHistoryService, TradeHistoryService>();
-        builder.Services.AddScoped<IDexDbService, DexDbService>();
         builder.Services.AddScoped<IDexService, DexService>();
 
         builder.Services.AddTransient<IHttpService, HttpService>();

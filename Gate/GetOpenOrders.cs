@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Interfaces;
@@ -10,30 +11,32 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using CommonOrder = Common.Models.Order;
 
-namespace Gate
+namespace Gate;
+
+internal class OrdersResponseResultItem
 {
-    internal class OrdersResponseResultItem
+    public string currency_pair { get; set; }
+    public IEnumerable<GateOrder> orders { get; set; }
+}
+
+public class GetOpenOrders
+{
+    private readonly IAuthService authService;
+    private readonly IHttpService httpService;
+
+    public GetOpenOrders(IAuthService authService, IHttpService httpService)
     {
-        public string currency_pair { get; set; }
-        public IEnumerable<GateOrder> orders { get; set; }
+        this.authService = authService;
+        this.httpService = httpService;
     }
 
-    public class GetOpenOrders
+    [FunctionName("GetOpenOrders")]
+    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
-        private readonly IAuthService authService;
-        private readonly IHttpService httpService;
+        this.authService.ValidateUser(req);
 
-        public GetOpenOrders(IAuthService authService, IHttpService httpService)
+        try
         {
-            this.authService = authService;
-            this.httpService = httpService;
-        }
-
-        [FunctionName("GetOpenOrders")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-        {
-            this.authService.ValidateUser(req);
-
             var response = await this.httpService.GetAsync<IEnumerable<OrdersResponseResultItem>>("/spot/open_orders");
 
             var body = response.Aggregate(
@@ -45,6 +48,10 @@ namespace Gate
                 });
 
             return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
         }
     }
 }

@@ -1,12 +1,9 @@
 ﻿using System;
-using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Common.Interfaces;
 using DataAccess.Interfaces;
 using Binance.Interfaces;
@@ -45,13 +42,20 @@ public class GetRecentTradeHistory
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var tasks = user.binance.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p.symbol, azureUserId));
-        await Task.WhenAll(tasks);
+        try
+        {
+            var tasks = user.binance.Select(p => this.tradeHistoryService.UpdateRecentTradeHistoryAsync(p.symbol, azureUserId));
+            await Task.WhenAll(tasks);
 
-        var orders = await this.binanceDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);
+            var orders = await this.binanceDbService.GetOrdersBySide(side.ToUpper(), int.Parse(limit), azureUserId);
 
-        var body = orders.Select(o => o.ToCommonOrder());
+            var body = orders.Select(o => o.ToCommonOrder());
 
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }

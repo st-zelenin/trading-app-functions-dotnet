@@ -33,27 +33,30 @@ public class GetOpenOrders
     {
         this.authService.ValidateUser(req);
 
-        var response = await this.httpService.GetSignedAsync<IEnumerable<BinanceOrder>>("/api/v3/openOrders");
+        try
+        {
+            var response = await this.httpService.GetSignedAsync<IEnumerable<BinanceOrder>>("/api/v3/openOrders");
 
-        var body = response.Aggregate(
-            new Dictionary<string, IList<CommonOrder>>(),
-            (acc, raw) =>
-            {
-                IList<CommonOrder> instrument;
-
-                if (!acc.TryGetValue(raw.symbol, out instrument))
+            var body = response.Aggregate(
+                new Dictionary<string, IList<CommonOrder>>(),
+                (acc, raw) =>
                 {
-                    instrument = new List<CommonOrder>();
-                    acc.Add(raw.symbol, instrument);
-                }
+                    if (!acc.TryGetValue(raw.symbol, out IList<CommonOrder> instrument))
+                    {
+                        instrument = new List<CommonOrder>();
+                        acc.Add(raw.symbol, instrument);
+                    }
 
-                instrument.Add(raw.ToCommonOrder());
+                    instrument.Add(raw.ToCommonOrder());
 
-                return acc;
-            });
+                    return acc;
+                });
 
-
-        return new OkObjectResult(body);
+            return new OkObjectResult(body);
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(ex.Message);
+        }
     }
 }
-

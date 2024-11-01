@@ -107,7 +107,7 @@ public class HttpService : BaseHttpService, IHttpService
         if (!response.IsSuccessStatusCode)
         {
             log.LogError($"request failed: {content}");
-            throw new HttpRequestException($"\"GET\" to \"{path}\" failed: \"{content}\"");
+            throw new HttpRequestException($"GET to \"{path}\" failed: {content}");
         }
 
         log.LogInformation($"\"GET\" to \"{path}\" succeeded with code \"{response.StatusCode}\"");

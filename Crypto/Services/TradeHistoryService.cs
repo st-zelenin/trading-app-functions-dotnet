@@ -30,19 +30,19 @@ public class TradeHistoryService : ITradeHistoryService
     {
         var data = new ImportPeriodTradeHistoryRequestData()
         {
-            end_ts = new DateTimeOffset(end).ToUnixTimeMilliseconds(),
-            start_ts = new DateTimeOffset(start).ToUnixTimeMilliseconds()
+            end_time = new DateTimeOffset(end).ToUnixTimeMilliseconds(),
+            start_time = new DateTimeOffset(start).ToUnixTimeMilliseconds()
         };
 
         var response = await this.httpService.PostAsync<ResponseWithResult<OrdersResponseResult>, ImportPeriodTradeHistoryRequestData>
             ("private/get-order-history", data);
 
-        if (response.result.order_list.Count() <= 0)
+        if (response.result.data is null || response.result.data.Count() <= 0)
         {
             return;
         }
 
-        var filledOrders = response.result.order_list.Where(o => o.status == DataAccess.Models.CryptoOrderStatus.FILLED);
+        var filledOrders = response.result.data.Where(o => o.status == DataAccess.Models.CryptoOrderStatus.FILLED);
         if (filledOrders.Count() == 0)
         {
             return;
@@ -59,6 +59,6 @@ public class TradeHistoryService : ITradeHistoryService
 
 internal class ImportPeriodTradeHistoryRequestData
 {
-public long start_ts { get; set; }
-public long end_ts { get; set; }
+    public long start_time { get; set; }
+    public long end_time { get; set; }
 }

@@ -14,7 +14,7 @@ namespace Crypto;
 
 internal class InstrumentsResponseResult
 {
-    public IEnumerable<Instrument> instruments { get; set; }
+    public IEnumerable<Instrument> data { get; set; }
 }
 
 public class GetProducts
@@ -44,7 +44,7 @@ public class GetProducts
             new Dictionary<string, Common.Models.Product>(),
             (acc, pair) =>
             {
-                var raw = instruments.result.instruments.FirstOrDefault(x => x.instrument_name == pair.symbol);
+                var raw = instruments.result.data.FirstOrDefault(x => x.symbol == pair.symbol);
                 if (raw != null)
                 {
                     acc.Add(pair.symbol, raw.ToCommonProduct());

@@ -36,7 +36,7 @@ public class GetTickers
         var azureUserId = this.authService.GetUserId(req);
         var user = await this.tradingDbService.GetUserAsync(azureUserId);
 
-        var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-ticker");
+        var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-tickers");
 
         var body = user.crypto.Aggregate(
             new Dictionary<string, Common.Models.Ticker>(),

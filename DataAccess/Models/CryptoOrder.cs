@@ -8,16 +8,16 @@ namespace DataAccess.Models;
 
 public class CryptoOrder
 {
-    public double avg_price { get; set; }
+    public string avg_price { get; set; }
     public long create_time { get; set; }
-    public double cumulative_quantity { get; set; }
-    public double cumulative_value { get; set; }
-    public string fee_currency { get; set; }
+    public string cumulative_quantity { get; set; }
+    public string cumulative_value { get; set; }
+    public string fee_instrument_name { get; set; }
     public string instrument_name { get; set; }
     public string id { get; set; }
     public string order_id { get; set; }
-    public double price { get; set; }
-    public double quantity { get; set; }
+    public string limit_price { get; set; }
+    public string quantity { get; set; }
     public CryptoOrderSide side { get; set; }
     public CryptoOrderStatus status { get; set; }
     public CryptoOrderType type { get; set; }
@@ -25,6 +25,9 @@ public class CryptoOrder
 
     public CommonOrder ToCommonOrder()
     {
+        double.TryParse(this.quantity, out var quantity);
+        double.TryParse(this.limit_price, out var price);
+
         return new CommonOrder()
         {
             id = this.order_id,
@@ -32,8 +35,8 @@ public class CryptoOrder
             createTimestamp = this.create_time,
             updateTimestamp = this.update_time,
             side = this.side == CryptoOrderSide.BUY ? CommonOrderSide.buy : CommonOrderSide.sell,
-            amount = this.quantity > 0 ? this.quantity : this.cumulative_quantity,
-            price = this.price > 0 ? this.price : this.avg_price,
+            amount = quantity > 0 ? quantity : double.Parse(this.cumulative_quantity),
+            price = price > 0 ? price : double.Parse(this.avg_price),
             status = this.ToCommonOrderStatus(),
             type = this.type == CryptoOrderType.LIMIT ? Common.Models.OrderType.limit : Common.Models.OrderType.market
         };
