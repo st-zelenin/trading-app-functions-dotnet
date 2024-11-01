@@ -29,7 +29,7 @@ namespace Crypto
             {
                 this.authService.ValidateUser(req);
 
-                var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-tickers1");
+                var response = await this.httpService.GetAsync<ResponseWithResult<TickersResponseResult>>("public/get-tickers");
 
                 var body = response.result.data.Select(t => t.i);
 
